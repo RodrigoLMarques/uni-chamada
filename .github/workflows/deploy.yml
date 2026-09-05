@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            context: ./backend
+          - service: frontend
+            context: ./frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build and push ARM image
+        run: |
+          TAG=${GITHUB_SHA}
+          IMAGE_NAME=ghcr.io/rodrigolmarques/uni-chamada-${{ matrix.service }}
+
+          docker build --platform linux/arm64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:$TAG ${{ matrix.context }}
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:$TAG
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+
+    steps:
+      - name: Atualizar containers
+        run: |
+          cd ~/homelab/stacks/projects
+          docker compose pull uni-chamada-backend uni-chamada-frontend
+          docker compose up -d uni-chamada-backend uni-chamada-frontend
