@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: unichamada
+      POSTGRES_USER: unichamada
+      POSTGRES_PASSWORD: unichamada
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unichamada -d unichamada"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/unichamada
+      SPRING_DATASOURCE_USERNAME: unichamada
+      SPRING_DATASOURCE_PASSWORD: unichamada
+    ports:
+      - "8080:8080"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend/src
+        - action: rebuild
+          path: ./backend/pom.xml
+
+volumes:
+  pgdata:
