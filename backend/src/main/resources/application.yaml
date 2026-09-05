@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: unichamada
+  datasource:
+    url: jdbc:postgresql://postgres:5432/unichamada
+    username: unichamada
+    password: unichamada
