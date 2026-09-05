@@ -4,9 +4,9 @@
 |---|---|---|
 | Branch | `<tipo>/<issue>-<slug>` | `feat/42-cadastro-de-usuario` |
 | Commit | `<tipo>(<escopo>): <descrição>` | `feat(backend): adiciona entidade User` |
-| Título do PR | `<tipo>(<escopo>): <descrição> (#<issue>)` | `feat(backend): cadastro de usuário (#42)` |
+| Título do PR | `<tipo>(<escopo>): <descrição>` | `feat(backend): cadastro de usuário` |
 
-Usamos **squash merge**: o título do PR vira o commit na `main`. É o mais importante dos três.
+Usamos **squash merge**: o título do PR vira o commit na `main`, e o GitHub anexa o número do PR sozinho. É o mais importante dos três.
 
 ---
 
@@ -84,6 +84,6 @@ Refs #58
 
 ## Pull requests
 
-- Título = regras do commit + `(#<issue>)` no final.
-- Descrição: o que muda e por quê, `Closes #<numero>`, como testar.
-- Revisável em 15 minutos. Passou de ~400 linhas, provavelmente são dois PRs.
+- Título = exatamente as regras do commit. **Não escreva o número da issue**: o GitHub já anexa o número do PR no squash, e issues e PRs dividem a mesma numeração, então um `(#42)` manual vira `(#42) (#43)` na `main`.
+- Descrição: o que muda e por quê, como testar, e `Closes #<numero>`, que liga o PR à issue e fecha ela no merge.
+- Revisável em 15 minutos. Passou de ~500 linhas, provavelmente são dois PRs.
