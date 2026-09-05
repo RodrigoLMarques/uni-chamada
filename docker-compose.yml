@@ -1,5 +1,6 @@
 services:
   postgres:
+    container_name: postgres
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
@@ -17,6 +18,7 @@ services:
       retries: 10
 
   backend:
+    container_name: backend
     build:
       context: ./backend
     restart: unless-stopped
@@ -35,6 +37,24 @@ services:
           path: ./backend/src
         - action: rebuild
           path: ./backend/pom.xml
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend/src
+        - action: rebuild
+          path: ./frontend/index.html
+        - action: rebuild
+          path: ./frontend/package.json
 
 volumes:
   pgdata:
