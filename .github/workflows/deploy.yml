@@ -15,9 +15,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - service: backend
+          - image: uni-chamada-api
             context: ./backend
-          - service: frontend
+          - image: uni-chamada-web
             context: ./frontend
 
     steps:
@@ -34,7 +34,7 @@ jobs:
       - name: Build and push ARM image
         run: |
           TAG=${GITHUB_SHA}
-          IMAGE_NAME=ghcr.io/rodrigolmarques/uni-chamada-${{ matrix.service }}
+          IMAGE_NAME=ghcr.io/rodrigolmarques/${{ matrix.image }}
 
           docker build --platform linux/arm64 -t $IMAGE_NAME:latest -t $IMAGE_NAME:$TAG ${{ matrix.context }}
           docker push $IMAGE_NAME:latest
@@ -48,5 +48,5 @@ jobs:
       - name: Atualizar containers
         run: |
           cd ~/homelab/stacks/projects
-          docker compose pull uni-chamada-backend uni-chamada-frontend
-          docker compose up -d uni-chamada-backend uni-chamada-frontend
+          docker compose pull uni-chamada-api uni-chamada-web
+          docker compose up -d uni-chamada-api uni-chamada-web
