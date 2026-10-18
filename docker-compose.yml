@@ -1,7 +1,7 @@
 services:
   postgres:
     container_name: postgres
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: unichamada
@@ -21,22 +21,18 @@ services:
     container_name: backend
     build:
       context: ./backend
+      dockerfile: Dockerfile.dev
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/unichamada
-      SPRING_DATASOURCE_USERNAME: unichamada
-      SPRING_DATASOURCE_PASSWORD: unichamada
+      DATABASE_URL: postgresql://unichamada:unichamada@postgres:5432/unichamada
     ports:
-      - "8080:8080"
-    develop:
-      watch:
-        - action: rebuild
-          path: ./backend/src
-        - action: rebuild
-          path: ./backend/pom.xml
+      - "3000:3000"
+    volumes:
+      - ./backend:/home/node/app
+      - /home/node/app/node_modules
 
   frontend:
     container_name: frontend

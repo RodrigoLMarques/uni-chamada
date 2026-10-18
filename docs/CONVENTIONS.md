@@ -18,12 +18,12 @@ Baseado em [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0
 |---|---|
 | `feat` | nova funcionalidade para o usuário |
 | `fix` | correção de bug |
-| `docs` | apenas documentação (README, ADR, javadoc, OpenAPI) |
+| `docs` | apenas documentação (README, ADR, JSDoc, OpenAPI) |
 | `style` | formatação, nada que mude comportamento |
 | `refactor` | reescrita que não corrige bug nem adiciona funcionalidade |
 | `perf` | melhora performance |
 | `test` | adiciona ou corrige testes |
-| `build` | build ou dependências (`pom.xml`, `package.json`, Dockerfile) |
+| `build` | build ou dependências (`package.json`, Dockerfile) |
 | `ci` | pipeline e automação (`.github/workflows/`) |
 | `chore` | manutenção que não se encaixa acima (`.gitignore`, templates) |
 | `revert` | reverte um commit anterior |

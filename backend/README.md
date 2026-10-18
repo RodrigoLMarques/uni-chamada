@@ -1,14 +1,16 @@
 # backend
 
-API do uni-chamada, feita em Spring Boot 4 (Java 25, Maven).
+API do uni-chamada, feita em NestJS 12 (Node 26, TypeScript 6).
 
 ## Pré-requisitos
 
-- Docker (Postgres e, opcionalmente, a própria API rodam em container)
-- JDK 25 — só se você for rodar a API ou os testes fora do container
+- Docker (é o caminho padrão: Postgres e a API sobem em container)
+- Node **>= 24.9** se você for rodar os testes fora do container
 
-Não é preciso instalar Maven: o build em container usa a imagem oficial do
-Maven e, no host, o projeto tem o Maven Wrapper (`./mvnw`).
+> O mínimo de 24.9 não é capricho: o NestJS 12 publica seus pacotes como
+> ESM (`"type": "module"`), e só a partir dessa versão o Jest consegue
+> carregá-los via `require(esm)`. Em Node 22 os testes falham com
+> `Must use import to load ES Module`. O projeto está no 26.x, a última.
 
 ## Opção 1: tudo em container
 
@@ -18,8 +20,8 @@ Na raiz do repositório:
 docker compose up -d --build
 ```
 
-Sobe o `postgres` e o `backend` (que só inicia depois do healthcheck do
-banco passar). A API fica em `http://localhost:8080`.
+Sobe `postgres` e `backend` (que só inicia depois do healthcheck do banco
+passar). A API fica em `http://localhost:3000`.
 
 ```bash
 docker compose logs -f backend   # acompanha os logs
@@ -27,83 +29,123 @@ docker compose down              # derruba tudo
 docker compose down -v           # derruba e apaga os dados do banco
 ```
 
-## Modo de desenvolvimento (rebuild automático)
+O container usa o `Dockerfile.dev` e roda `npm run start:dev`, então o
+`backend/` fica montado como volume e o Nest recompila sozinho a cada
+arquivo salvo — na prática ~2s, sem rebuild de imagem.
+
+Ele roda como o usuário `node` (uid 1000), e não como root, para que
+`dist/` e `*.tsbuildinfo` gerados dentro do container não fiquem
+root-owned no host.
+
+O `node_modules` vive dentro do container (volume anônimo), e não no host.
+Por isso, **ao adicionar ou atualizar uma dependência** é preciso
+rebuildar:
 
 ```bash
-docker compose watch
+docker compose up -d --build backend
 ```
-
-O Compose fica em foreground observando `backend/src` e `backend/pom.xml`.
-A cada alteração salva ele rebuilda a imagem e recria o container
-automaticamente — na prática ~6s por ciclo, porque as dependências Maven
-ficam em cache mount e as camadas do Docker são reaproveitadas.
-
-`Ctrl+C` encerra o watch. Para ver os logs da aplicação junto, use outro
-terminal com `docker compose logs -f backend`.
 
 ## Opção 2: banco em container, API no host
 
-Útil para desenvolver com hot reload do devtools.
-
 ```bash
 docker compose up -d postgres
+npm install
+npm run start:dev
 ```
 
-O `application.yaml` aponta para o host `postgres`, que só resolve dentro
-da rede do Compose. Rodando no host, sobrescreva a URL:
+## Testes
 
 ```bash
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/unichamada ./mvnw spring-boot:run
+npm test          # unitários
+npm run test:e2e  # sobe o app em memória e bate nos endpoints
+npm run test:cov  # cobertura
 ```
 
-## Rodando os testes
+Os scripts chamam o Jest via
+`node --experimental-vm-modules ./node_modules/jest/bin/jest.js`, igual ao
+template oficial do Nest 12. A flag é obrigatória: sem ela, o Jest não
+carrega os pacotes ESM do Nest, mesmo no Node 26. Ela imprime um
+`ExperimentalWarning` em cada execução — é esperado.
 
-Os testes sobem o contexto Spring, então precisam do Postgres no ar:
+Nenhum dos dois precisa de banco no ar hoje: o hello world não toca no
+Postgres.
+
+## Lint e formatação
 
 ```bash
-docker compose up -d postgres
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/unichamada ./mvnw test
+npm run lint      # eslint --fix
+npm run format    # prettier --write
 ```
 
-> Sem banco acessível, `contextLoads` e qualquer teste que suba o contexto
-> falham com `Failed to determine a suitable driver class`, pois o
-> Flyway/Data JPA criam o datasource já na inicialização.
+ESLint com `recommendedTypeChecked` + Prettier (aspas simples, vírgula
+final, largura 100).
+
+> O template oficial do Nest 12 já migrou para **oxlint** (que o
+> `frontend/` daqui também usa) e **vitest**. Mantivemos eslint + jest por
+> alinhamento com os outros projetos; trocar é uma decisão em aberto.
 
 ## Build
 
 ```bash
-./mvnw clean package     # gera o .jar em target/
+npm run build     # gera dist/
 docker compose build backend
 ```
 
-A imagem é multi-stage: compila com `maven:3.9-eclipse-temurin-25` e roda o
-`.jar` em `eclipse-temurin:25-jre` com usuário não-root. Os testes ficam
-fora do build da imagem porque exigiriam um banco durante o `docker build`.
+O `Dockerfile` (sem `.dev`) é a imagem de produção, usada pelo CI: build
+multi-stage que compila o TypeScript, instala só as dependências de
+produção e roda `node dist/main` com o usuário `node`, não-root. É esse
+arquivo que o workflow de deploy publica como `uni-chamada-api`.
 
 ## Problemas comuns
 
-**`Failed to init ct.sym for .../java-21-openjdk/lib/jrt-fs.jar`** (VS Code)
+**O watcher entra em loop com `Cannot find module '/home/node/app/dist/main'`**
 
-A extensão Java está usando um JDK antigo, que não tem o `ct.sym` exigido
-para compilar com `--release 25`. Aponte a extensão para o JDK 25 no seu
-`.vscode/settings.json` (o diretório é gitignorado, pois o caminho varia
-por máquina):
+Acontece se o `dist/` for apagado à mão com o watcher rodando: o
+`tsconfig.build.tsbuildinfo` continua dizendo que a saída está em dia,
+então o `tsc` responde `Found 0 errors` sem emitir nada e o runner não
+encontra o `dist/main`. Apague o `.tsbuildinfo` junto e reinicie:
 
-```json
-{
-  "java.jdt.ls.java.home": "/usr/lib/jvm/java-25-openjdk",
-  "java.configuration.runtimes": [
-    { "name": "JavaSE-25", "path": "/usr/lib/jvm/java-25-openjdk", "default": true }
-  ]
-}
+```bash
+rm -rf backend/dist backend/*.tsbuildinfo
+docker compose restart backend
 ```
 
-Depois: `Developer: Reload Window` e, se persistir,
-`Java: Clean Java Language Server Workspace`.
+## Por que TypeScript 6, e não 7
 
-## Segurança
+O TS 7 (compilador nativo) já está publicado, mas o Nest ainda não o
+suporta: o `@nestjs/cli@12` traz `typescript: ~6.0.2` como dependência
+direta, então o `nest build` compila com a cópia dele (6.0.3)
+independentemente do que o projeto declarar. Além disso o `ts-jest` exige
+`typescript <7` e o `typescript-eslint` exige `<6.1.0`.
 
-O projeto usa `spring-boot-starter-security`, que por padrão exige Basic
-Auth em todos os endpoints (com uma senha aleatória impressa no log a cada
-start). `SecurityConfig` libera `/` publicamente; qualquer endpoint novo
-nasce autenticado até ser explicitamente liberado nessa mesma classe.
+Por isso o `typescript` está fixado em `~6.0.3`: é a versão mais recente
+que o Nest e o resto do toolchain aceitam. O `~` (e não `^`) é de
+propósito — um 6.1 quebraria o peer do `typescript-eslint`.
+
+O tsconfig já usa `module`/`moduleResolution: nodenext` com
+`resolvePackageJsonExports`, como o template oficial, então não há nenhuma
+opção deprecada pendente para a migração ao TS 7.
+
+## Estrutura
+
+```
+src/
+  main.ts            # bootstrap: ValidationPipe global, CORS, porta
+  app.module.ts      # módulo raiz (ConfigModule global)
+  app.controller.ts  # GET / -> Hello World
+  app.service.ts
+test/
+  app.e2e-spec.ts
+```
+
+Módulos novos entram em `src/modules/<nome>/` e são importados no
+`app.module.ts`.
+
+## Variáveis de ambiente
+
+| Variável | Default | Para quê |
+|---|---|---|
+| `PORT` | `3000` | porta HTTP |
+| `DATABASE_URL` | — | conexão com o Postgres; já definida no Compose e ainda não usada pela aplicação |
+
+O `ConfigModule` é global e lê um `backend/.env` se existir (gitignorado).

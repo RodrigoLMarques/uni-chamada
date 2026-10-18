@@ -1,18 +1,29 @@
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM node:26-alpine AS build
 WORKDIR /build
 
-COPY pom.xml .
-COPY src ./src
+COPY package.json package-lock.json ./
+RUN npm ci
 
-RUN --mount=type=cache,target=/root/.m2 mvn -B clean package -DskipTests
+COPY . .
 
-FROM eclipse-temurin:25-jre
+RUN npm run build
+
+FROM node:26-alpine AS deps
+WORKDIR /deps
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+FROM node:26-alpine
 WORKDIR /app
 
-RUN useradd --system --create-home --shell /usr/sbin/nologin spring
-USER spring
+ENV NODE_ENV=production
 
-COPY --from=build /build/target/*.jar app.jar
+COPY --from=deps /deps/node_modules ./node_modules
+COPY --from=build /build/dist ./dist
+COPY package.json ./
 
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+USER node
+
+EXPOSE 3000
+CMD ["node", "dist/main"]

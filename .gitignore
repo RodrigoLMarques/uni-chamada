@@ -4,27 +4,17 @@
 *.iml
 *.ipr
 .vscode/
-.classpath
-.factorypath
-.project
-.settings/
-.springBeans
-.sts4-cache/
-.apt_generated/
 
 ### OS ###
 .DS_Store
 Thumbs.db
 
-### Backend (Java/Maven) ###
-backend/HELP.md
-backend/target/
-backend/.mvn/wrapper/maven-wrapper.jar
-!backend/**/src/main/**/target/
-!backend/**/src/test/**/target/
-backend/build/
-!backend/**/src/main/**/build/
-!backend/**/src/test/**/build/
+### Backend (NestJS) ###
+backend/node_modules/
+backend/dist/
+backend/coverage/
+backend/.env
+backend/*.tsbuildinfo
 
 ### Frontend (Node) ###
 frontend/node_modules/
