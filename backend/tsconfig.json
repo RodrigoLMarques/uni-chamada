@@ -24,6 +24,10 @@
       "node",
       "jest"
     ],
-    "rootDir": "."
+    "rootDir": ".",
+    "strictPropertyInitialization": false
+  },
+  "ts-node": {
+    "experimentalResolver": true
   }
 }
