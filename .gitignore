@@ -15,6 +15,7 @@ backend/dist/
 backend/coverage/
 backend/.env
 backend/*.tsbuildinfo
+backend/generated/
 
 ### Frontend (Node) ###
 frontend/node_modules/
