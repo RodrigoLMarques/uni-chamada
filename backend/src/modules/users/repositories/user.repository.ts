@@ -10,30 +10,26 @@ import { UserEntity } from '../models/user.entity';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(user: UserEntity): Promise<UserEntity> {
+  async create(user: Omit<UserEntity, 'id'>): Promise<UserEntity> {
     const data = UserMapper.entityToModel(user);
     const created = await this.prisma.user.create({ data });
     return UserMapper.modelToEntity(created);
   }
 
-  async findById(id: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findFirst({
-      where: { id, deletedAt: null },
-    });
+  async findById(id: bigint): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) return null;
     return UserMapper.modelToEntity(user);
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findFirst({
-      where: { email, deletedAt: null },
-    });
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) return null;
     return UserMapper.modelToEntity(user);
   }
 
   async findAll(filter: UserFilter): Promise<PaginatedItems<UserEntity>> {
-    const where: Prisma.UserWhereInput = { deletedAt: null };
+    const where: Prisma.UserWhereInput = {};
 
     if (filter.query) {
       where.OR = [
@@ -42,14 +38,10 @@ export class UserRepository {
       ];
     }
 
-    if (filter.role !== undefined) {
-      where.role = filter.role;
-    }
-
     const [items, totalItems] = await Promise.all([
       this.prisma.user.findMany({
         where,
-        orderBy: [{ name: 'asc' }, { createdAt: 'desc' }],
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
         take: filter.itemsPerPage,
         skip: (filter.page - 1) * filter.itemsPerPage,
       }),
@@ -62,23 +54,19 @@ export class UserRepository {
     };
   }
 
-  async update(id: string, data: Partial<UserEntity>): Promise<UserEntity> {
+  async update(id: bigint, data: Partial<UserEntity>): Promise<UserEntity> {
     const updated = await this.prisma.user.update({
-      where: { id, deletedAt: null },
+      where: { id },
       data: {
         name: data.name,
         email: data.email,
-        password: data.password,
-        role: data.role,
+        passwordHash: data.passwordHash,
       },
     });
     return UserMapper.modelToEntity(updated);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id, deletedAt: null },
-      data: { deletedAt: new Date() },
-    });
+  async remove(id: bigint): Promise<void> {
+    await this.prisma.user.delete({ where: { id } });
   }
 }

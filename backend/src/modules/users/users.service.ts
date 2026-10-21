@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'node:crypto';
 import { PaginatedItems } from '../../shared/pagination';
 import { UserConflictException } from './exceptions/user-conflict.exception';
 import { UserNotFoundException } from './exceptions/user-not-found.exception';
-import { CreateUserDTO, UpdateUserDTO, UserFilter } from './models/user.dto';
-import { UserEntity, UserRole } from './models/user.entity';
+import { CreateUserDTO, UpdateMeDTO, UpdateUserDTO, UserFilter } from './models/user.dto';
+import { UserEntity } from './models/user.entity';
 import { UserRepository } from './repositories/user.repository';
 
 @Injectable()
@@ -22,29 +21,26 @@ export class UsersService {
     }
 
     const rounds = Number(this.configService.get('BCRYPT_ROUNDS', 10));
-    const hashedPassword = await bcrypt.hash(dto.password, rounds);
+    const passwordHash = await bcrypt.hash(dto.password, rounds);
 
-    const user: UserEntity = {
-      id: randomUUID(),
+    return this.userRepository.create({
       name: dto.name,
       email: dto.email,
-      password: hashedPassword,
-      role: dto.role ?? UserRole.student,
-    };
-    return this.userRepository.create(user);
+      passwordHash,
+    });
   }
 
   async findAll(filter: UserFilter): Promise<PaginatedItems<UserEntity>> {
     return this.userRepository.findAll(filter);
   }
 
-  async findById(id: string): Promise<UserEntity> {
+  async findById(id: bigint): Promise<UserEntity> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new UserNotFoundException(id);
     return user;
   }
 
-  async update(id: string, dto: UpdateUserDTO): Promise<UserEntity> {
+  async update(id: bigint, dto: UpdateUserDTO | UpdateMeDTO): Promise<UserEntity> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new UserNotFoundException(id);
 
@@ -57,7 +53,7 @@ export class UsersService {
     return this.userRepository.update(id, dto);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: bigint): Promise<void> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new UserNotFoundException(id);
     await this.userRepository.remove(id);

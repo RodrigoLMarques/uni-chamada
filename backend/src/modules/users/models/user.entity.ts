@@ -1,14 +1,7 @@
-import { UserRole } from '../../../../generated/prisma/enums';
-
-export { UserRole };
-
 export type UserEntity = {
-  id: string;
+  id: bigint;
   name: string;
   email: string;
-  password: string;
-  role: UserRole;
+  passwordHash: string;
   createdAt?: Date | null;
-  updatedAt?: Date | null;
-  deletedAt?: Date | null;
 };
