@@ -16,9 +16,9 @@ describe('AuthService', () => {
   beforeEach(async () => {
     stored = {
       id: BigInt(1),
-      name: 'Professor',
-      email: 'professor@unifesp.br',
-      passwordHash: await bcrypt.hash('segredo123', 4),
+      name: 'Teacher',
+      email: 'teacher@unifesp.br',
+      passwordHash: await bcrypt.hash('secret123', 4),
       createdAt: new Date(),
     };
 
@@ -44,10 +44,10 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('devolve token e usuário sem a senha', async () => {
+    it('returns a token and the user without the password', async () => {
       repository.findUserByEmail.mockResolvedValue(stored);
 
-      const result = await service.login({ email: stored.email, password: 'segredo123' });
+      const result = await service.login({ email: stored.email, password: 'secret123' });
 
       expect(result.accessToken).toBe('token');
       expect(result.user).toEqual({
@@ -58,10 +58,10 @@ describe('AuthService', () => {
       expect(result.user).not.toHaveProperty('passwordHash');
     });
 
-    it('assina o token com sub, email e role', async () => {
+    it('signs the token with sub and email', async () => {
       repository.findUserByEmail.mockResolvedValue(stored);
 
-      await service.login({ email: stored.email, password: 'segredo123' });
+      await service.login({ email: stored.email, password: 'secret123' });
 
       expect(jwtService.signAsync).toHaveBeenCalledWith({
         sub: stored.id.toString(),
@@ -69,45 +69,45 @@ describe('AuthService', () => {
       });
     });
 
-    it('recusa senha errada', async () => {
+    it('rejects a wrong password', async () => {
       repository.findUserByEmail.mockResolvedValue(stored);
 
-      await expect(service.login({ email: stored.email, password: 'errada' })).rejects.toThrow(
+      await expect(service.login({ email: stored.email, password: 'wrong' })).rejects.toThrow(
         'invalid_credentials',
       );
     });
 
-    it('recusa email inexistente sem revelar que a conta não existe', async () => {
+    it('rejects an unknown email without revealing the account does not exist', async () => {
       repository.findUserByEmail.mockResolvedValue(null);
 
       await expect(
-        service.login({ email: 'ninguem@unifesp.br', password: 'segredo123' }),
+        service.login({ email: 'nobody@unifesp.br', password: 'secret123' }),
       ).rejects.toThrow('invalid_credentials');
     });
   });
 
   describe('updatePassword', () => {
-    it('troca a senha quando a atual confere', async () => {
+    it('changes the password when the current one matches', async () => {
       repository.findUserById.mockResolvedValue(stored);
 
       const result = await service.updatePassword(stored.id, {
-        currentPassword: 'segredo123',
-        newPassword: 'novasenha123',
+        currentPassword: 'secret123',
+        newPassword: 'newsecret123',
       });
 
       expect(result).toEqual({ message: 'password_updated' });
 
       const [, hashed] = repository.updatePassword.mock.calls[0];
-      expect(await bcrypt.compare('novasenha123', hashed)).toBe(true);
+      expect(await bcrypt.compare('newsecret123', hashed)).toBe(true);
     });
 
-    it('recusa quando a senha atual está errada', async () => {
+    it('rejects when the current password is wrong', async () => {
       repository.findUserById.mockResolvedValue(stored);
 
       await expect(
         service.updatePassword(stored.id, {
-          currentPassword: 'errada',
-          newPassword: 'novasenha123',
+          currentPassword: 'wrong',
+          newPassword: 'newsecret123',
         }),
       ).rejects.toThrow('invalid_credentials');
       expect(repository.updatePassword).not.toHaveBeenCalled();

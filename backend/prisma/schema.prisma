@@ -7,6 +7,16 @@ datasource db {
   provider = "postgresql"
 }
 
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+}
+
+enum CoursePeriod {
+  FULL_TIME
+  EVENING
+}
+
 model User {
   id           BigInt   @id @default(autoincrement())
   email        String   @unique
@@ -14,5 +24,49 @@ model User {
   passwordHash String   @map("password_hash")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
+  courses Course[]
+
   @@map("users")
+}
+
+model Student {
+  id        BigInt  @id @default(autoincrement())
+  ra        String  @unique
+  name      String
+  email     String?
+  photoUrl  String? @map("photo_url")
+  entryYear Int?    @map("entry_year")
+
+  enrollments Enrollment[]
+
+  @@map("student")
+}
+
+model Course {
+  id        BigInt       @id @default(autoincrement())
+  teacherId BigInt       @map("teacher_id")
+  code      String
+  name      String
+  term      String
+  period    CoursePeriod
+
+  teacher     User         @relation(fields: [teacherId], references: [id])
+  enrollments Enrollment[]
+
+  @@unique([teacherId, code, term, period])
+  @@index([teacherId], map: "idx_course_teacher")
+  @@map("course")
+}
+
+model Enrollment {
+  courseId   BigInt           @map("course_id")
+  studentId  BigInt           @map("student_id")
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime         @default(now()) @map("enrolled_at") @db.Timestamptz
+
+  course  Course  @relation(fields: [courseId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@id([courseId, studentId])
+  @@map("enrollment")
 }

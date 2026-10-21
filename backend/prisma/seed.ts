@@ -11,8 +11,8 @@ async function main() {
   const passwordHash = await bcrypt.hash('123456', 10);
 
   const users = [
-    { email: 'professor@unifesp.br', name: 'Professor' },
-    { email: 'professora@unifesp.br', name: 'Professora' },
+    { email: 'teacher@unifesp.br', name: 'Teacher One' },
+    { email: 'teacher2@unifesp.br', name: 'Teacher Two' },
   ];
 
   for (const user of users) {

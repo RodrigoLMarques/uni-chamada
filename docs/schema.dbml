@@ -3,52 +3,41 @@ Project unichamada {
   Note: 'Schema MVP. Fonte da verdade continua sendo backend/prisma/schema.prisma.'
 }
 
-Table institution {
-  id bigint [pk, increment]
-  name text [not null]
-  created_at timestamptz [not null, default: `now()`]
-
-  Note: 'Tenant'
-}
-
 Table app_user {
   id bigint [pk, increment]
-  institution_id bigint [not null, ref: > institution.id]
   email text [not null, unique]
   name text [not null]
   password_hash text [not null]
   created_at timestamptz [not null, default: `now()`]
 
-  Note: 'Professor. "user" é reservada no Postgres.'
+  Note: 'Professor (teacher no codigo). "user" e reservada no Postgres, a tabela se chama "users".'
 }
 
 Table student {
   id bigint [pk, increment]
-  institution_id bigint [not null, ref: > institution.id]
-  ra text [not null]
+  ra text [not null, unique]
   name text [not null]
+  email text
+  photo_url text
+  entry_year int [note: 'ano de ingresso na faculdade']
 
-  indexes {
-    (institution_id, ra) [unique]
-  }
-
-  Note: 'Aluno não faz login; identificado pelo RA.'
+  Note: 'Aluno nao faz login; identificado pelo RA. Um RA = uma pessoa. Email, foto e ano de ingresso sao opcionais.'
 }
 
 Table course {
   id bigint [pk, increment]
-  institution_id bigint [not null, ref: > institution.id]
-  professor_id bigint [not null, ref: > app_user.id]
+  teacher_id bigint [not null, ref: > app_user.id]
   code text [not null]
   name text [not null]
   term text [not null, note: 'ex.: 2026.2']
+  period text [not null, note: 'CHECK: FULL_TIME | EVENING']
 
   indexes {
-    (institution_id, code, term) [unique]
-    professor_id [name: 'idx_course_professor']
+    (teacher_id, code, term, period) [unique]
+    teacher_id [name: 'idx_course_teacher']
   }
 
-  Note: 'Oferta da disciplina no semestre (turma).'
+  Note: 'Oferta da disciplina no semestre (turma). A chave inclui teacher e period porque o mesmo codigo no mesmo semestre em turmas diferentes e normal.'
 }
 
 Table enrollment {
@@ -61,7 +50,7 @@ Table enrollment {
     (course_id, student_id) [pk]
   }
 
-  Note: 'Denominador da frequência. Trancamento = status, não DELETE.'
+  Note: 'Denominador da frequencia. Trancamento = status, nao DELETE.'
 }
 
 Table student_device {
@@ -75,20 +64,25 @@ Table student_device {
     student_id [name: 'idx_device_student']
   }
 
-  Note: 'Cada re-vínculo é uma linha nova.'
+  Note: 'Cada re-vinculo e uma linha nova.'
 }
 
 Table class_session {
   id bigint [pk, increment]
   course_id bigint [not null, ref: > course.id]
   starts_at timestamptz [not null]
-  opened_at timestamptz [note: 'QR começou a rodar']
+  opened_at timestamptz [note: 'QR comecou a rodar']
   closed_at timestamptz [note: 'QR parou']
-  confirmed_at timestamptz [note: 'professor confirmou na revisão']
+  confirmed_at timestamptz [note: 'teacher confirmou na revisao']
+  latitude numeric(9,6) [note: 'local do teacher ao abrir; referencia para a distancia']
+  longitude numeric(9,6)
+  accuracy_m real
 
   indexes {
     (course_id, starts_at) [unique]
   }
+
+  Note: 'O QR e stateless: HMAC(class_session_id + janela de 3s + secret). Nao ha tabela de token.'
 }
 
 Table attendance {
@@ -108,5 +102,5 @@ Table attendance {
     (device_id, class_session_id) [name: 'idx_attendance_device']
   }
 
-  Note: 'Sinais crus; flags de suspeita são derivadas em query.'
+  Note: 'Sinais crus; flags de suspeita sao derivadas em query. Mesmo celular duas vezes na sessao nao e bloqueado, e avisado ao teacher.'
 }
