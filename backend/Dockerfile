@@ -1,7 +1,9 @@
 FROM node:26-alpine AS build
 WORKDIR /build
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json prisma.config.ts ./
+COPY prisma ./prisma
+
 RUN npm ci
 
 COPY . .
@@ -12,7 +14,9 @@ RUN npm run build
 FROM node:26-alpine AS deps
 WORKDIR /deps
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json prisma.config.ts ./
+COPY prisma ./prisma
+
 RUN npm ci --omit=dev
 
 FROM node:26-alpine
