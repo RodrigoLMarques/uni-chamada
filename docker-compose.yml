@@ -28,7 +28,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://unichamada:unichamada@postgres:5432/unichamada
-      JWT_SECRET: dev-secret-nao-use-em-producao
+      JWT_SECRET: dev-secret-do-not-use-in-production
       JWT_EXPIRES_IN: 7d
     ports:
       - "3000:3000"

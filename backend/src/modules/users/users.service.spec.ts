@@ -9,8 +9,8 @@ import { UsersService } from './users.service';
 
 const existing: UserEntity = {
   id: BigInt(1),
-  name: 'Professor',
-  email: 'professor@unifesp.br',
+  name: 'Teacher',
+  email: 'teacher@unifesp.br',
   passwordHash: 'hash',
 };
 
@@ -45,63 +45,63 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
-    it('faz hash da senha e deixa o id para o banco gerar', async () => {
+    it('hashes the password and leaves the id for the database', async () => {
       repository.findByEmail.mockResolvedValue(null);
 
       const user = await service.create({
-        name: 'Nova',
-        email: 'nova@unifesp.br',
-        password: 'segredo123',
+        name: 'New',
+        email: 'new@unifesp.br',
+        password: 'secret123',
       });
 
-      expect(user.passwordHash).not.toBe('segredo123');
-      expect(await bcrypt.compare('segredo123', user.passwordHash)).toBe(true);
+      expect(user.passwordHash).not.toBe('secret123');
+      expect(await bcrypt.compare('secret123', user.passwordHash)).toBe(true);
 
       const [created] = repository.create.mock.calls[0];
       expect(created).not.toHaveProperty('id');
     });
 
-    it('recusa email já em uso', async () => {
+    it('rejects an email already in use', async () => {
       repository.findByEmail.mockResolvedValue(existing);
 
       await expect(
-        service.create({ name: 'Outro', email: existing.email, password: 'segredo123' }),
+        service.create({ name: 'Another', email: existing.email, password: 'secret123' }),
       ).rejects.toThrow(UserConflictException);
       expect(repository.create).not.toHaveBeenCalled();
     });
   });
 
   describe('findById', () => {
-    it('estoura quando não encontra', async () => {
+    it('throws when not found', async () => {
       repository.findById.mockResolvedValue(null);
       await expect(service.findById(existing.id)).rejects.toThrow(UserNotFoundException);
     });
   });
 
   describe('update', () => {
-    it('recusa trocar para um email já em uso', async () => {
+    it('rejects changing to an email already in use', async () => {
       repository.findById.mockResolvedValue(existing);
       repository.findByEmail.mockResolvedValue({ ...existing, id: BigInt(99) });
 
-      await expect(service.update(existing.id, { email: 'ocupado@unifesp.br' })).rejects.toThrow(
+      await expect(service.update(existing.id, { email: 'taken@unifesp.br' })).rejects.toThrow(
         UserConflictException,
       );
       expect(repository.update).not.toHaveBeenCalled();
     });
 
-    it('não checa conflito quando o email não muda', async () => {
+    it('does not check conflict when the email is unchanged', async () => {
       repository.findById.mockResolvedValue(existing);
 
-      await service.update(existing.id, { email: existing.email, name: 'Novo Nome' });
+      await service.update(existing.id, { email: existing.email, name: 'New Name' });
 
       expect(repository.findByEmail).not.toHaveBeenCalled();
       expect(repository.update).toHaveBeenCalledWith(existing.id, {
         email: existing.email,
-        name: 'Novo Nome',
+        name: 'New Name',
       });
     });
 
-    it('estoura quando o usuário não existe', async () => {
+    it('throws when the user does not exist', async () => {
       repository.findById.mockResolvedValue(null);
       await expect(service.update(existing.id, { name: 'X' })).rejects.toThrow(
         UserNotFoundException,
@@ -110,13 +110,13 @@ describe('UsersService', () => {
   });
 
   describe('remove', () => {
-    it('delega a remoção ao repositório', async () => {
+    it('delegates removal to the repository', async () => {
       repository.findById.mockResolvedValue(existing);
       await service.remove(existing.id);
       expect(repository.remove).toHaveBeenCalledWith(existing.id);
     });
 
-    it('estoura quando o usuário não existe', async () => {
+    it('throws when the user does not exist', async () => {
       repository.findById.mockResolvedValue(null);
       await expect(service.remove(existing.id)).rejects.toThrow(UserNotFoundException);
     });

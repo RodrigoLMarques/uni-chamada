@@ -11,7 +11,7 @@ describe('AuthController (e2e)', () => {
   let prisma: PrismaService;
 
   const email = `auth-${Date.now()}@unifesp.br`;
-  const password = 'segredo123';
+  const password = 'secret123';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -39,7 +39,7 @@ describe('AuthController (e2e)', () => {
 
   let accessToken: string;
 
-  it('POST /auth/login devolve token e usuário', async () => {
+  it('POST /auth/login returns a token and the user', async () => {
     const response = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email, password })
@@ -54,21 +54,21 @@ describe('AuthController (e2e)', () => {
     accessToken = body.accessToken;
   });
 
-  it('POST /auth/login com senha errada dá 401', async () => {
+  it('POST /auth/login with a wrong password returns 401', async () => {
     await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email, password: 'errada' })
+      .send({ email, password: 'wrong' })
       .expect(401);
   });
 
-  it('POST /auth/login com email inexistente dá 401', async () => {
+  it('POST /auth/login with an unknown email returns 401', async () => {
     await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email: 'ninguem@unifesp.br', password })
+      .send({ email: 'nobody@unifesp.br', password })
       .expect(401);
   });
 
-  it('GET /auth/me devolve o usuário do token', async () => {
+  it('GET /auth/me returns the user from the token', async () => {
     const response = await request(app.getHttpServer())
       .get('/auth/me')
       .set('Authorization', `Bearer ${accessToken}`)
@@ -77,37 +77,37 @@ describe('AuthController (e2e)', () => {
     expect((response.body as UserPayload).email).toBe(email);
   });
 
-  it('GET /auth/me sem token dá 401', async () => {
+  it('GET /auth/me without a token returns 401', async () => {
     await request(app.getHttpServer()).get('/auth/me').expect(401);
   });
 
-  it('GET /auth/me com token inválido dá 401', async () => {
+  it('GET /auth/me with an invalid token returns 401', async () => {
     await request(app.getHttpServer())
       .get('/auth/me')
-      .set('Authorization', 'Bearer nao-e-um-token')
+      .set('Authorization', 'Bearer not-a-token')
       .expect(401);
   });
 
-  it('PUT /auth/password troca a senha e o login novo funciona', async () => {
+  it('PUT /auth/password changes the password and the new login works', async () => {
     await request(app.getHttpServer())
       .put('/auth/password')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ currentPassword: password, newPassword: 'novasenha123' })
+      .send({ currentPassword: password, newPassword: 'newsecret123' })
       .expect(200);
 
     await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email, password: 'novasenha123' })
+      .send({ email, password: 'newsecret123' })
       .expect(200);
 
     await request(app.getHttpServer()).post('/auth/login').send({ email, password }).expect(401);
   });
 
-  it('PUT /auth/password com a senha atual errada dá 401', async () => {
+  it('PUT /auth/password with a wrong current password returns 401', async () => {
     await request(app.getHttpServer())
       .put('/auth/password')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ currentPassword: 'errada', newPassword: 'outrasenha123' })
+      .send({ currentPassword: 'wrong', newPassword: 'othersecret123' })
       .expect(401);
   });
 });
