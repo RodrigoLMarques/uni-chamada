@@ -7,21 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  student
-  professor
-  admin
-}
-
 model User {
-  id        String    @id @db.Uuid
-  name      String
-  email     String    @unique
-  password  String
-  role      UserRole  @default(student)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id           BigInt   @id @default(autoincrement())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@map("users")
 }

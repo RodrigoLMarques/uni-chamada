@@ -8,30 +8,24 @@ export class UserMapper {
       id: model.id,
       name: model.name,
       email: model.email,
-      password: model.password,
-      role: model.role,
+      passwordHash: model.passwordHash,
       createdAt: model.createdAt,
-      updatedAt: model.updatedAt,
-      deletedAt: model.deletedAt,
     };
   }
 
-  static entityToModel(entity: UserEntity): Prisma.UserCreateInput {
+  static entityToModel(entity: Omit<UserEntity, 'id'>): Prisma.UserCreateInput {
     return {
-      id: entity.id,
       name: entity.name,
       email: entity.email,
-      password: entity.password,
-      role: entity.role,
+      passwordHash: entity.passwordHash,
     };
   }
 
   static entityToDTO(entity: UserEntity): UserDTO {
     return {
-      id: entity.id,
+      id: Number(entity.id),
       name: entity.name,
       email: entity.email,
-      role: entity.role,
     };
   }
 }

@@ -3,16 +3,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import { UserConflictException } from './exceptions/user-conflict.exception';
 import { UserNotFoundException } from './exceptions/user-not-found.exception';
-import { UserEntity, UserRole } from './models/user.entity';
+import { UserEntity } from './models/user.entity';
 import { UserRepository } from './repositories/user.repository';
 import { UsersService } from './users.service';
 
 const existing: UserEntity = {
-  id: '11111111-1111-1111-1111-111111111111',
-  name: 'Fulano',
-  email: 'fulano@unifesp.br',
-  password: 'hash',
-  role: UserRole.student,
+  id: BigInt(1),
+  name: 'Professor',
+  email: 'professor@unifesp.br',
+  passwordHash: 'hash',
 };
 
 describe('UsersService', () => {
@@ -21,11 +20,13 @@ describe('UsersService', () => {
 
   beforeEach(async () => {
     const repositoryMock = {
-      create: jest.fn((user: UserEntity) => Promise.resolve(user)),
+      create: jest.fn((user: Omit<UserEntity, 'id'>) =>
+        Promise.resolve({ ...user, id: BigInt(2) }),
+      ),
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findAll: jest.fn(),
-      update: jest.fn((id: string, data: Partial<UserEntity>) =>
+      update: jest.fn((id: bigint, data: Partial<UserEntity>) =>
         Promise.resolve({ ...existing, ...data }),
       ),
       remove: jest.fn(),
@@ -44,32 +45,20 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
-    it('faz hash da senha e assume role student por padrão', async () => {
+    it('faz hash da senha e deixa o id para o banco gerar', async () => {
       repository.findByEmail.mockResolvedValue(null);
 
       const user = await service.create({
-        name: 'Ciclano',
-        email: 'ciclano@unifesp.br',
+        name: 'Nova',
+        email: 'nova@unifesp.br',
         password: 'segredo123',
       });
 
-      expect(user.role).toBe(UserRole.student);
-      expect(user.password).not.toBe('segredo123');
-      expect(await bcrypt.compare('segredo123', user.password)).toBe(true);
-      expect(user.id).toMatch(/^[0-9a-f-]{36}$/);
-    });
+      expect(user.passwordHash).not.toBe('segredo123');
+      expect(await bcrypt.compare('segredo123', user.passwordHash)).toBe(true);
 
-    it('respeita a role informada', async () => {
-      repository.findByEmail.mockResolvedValue(null);
-
-      const user = await service.create({
-        name: 'Prof',
-        email: 'prof@unifesp.br',
-        password: 'segredo123',
-        role: UserRole.professor,
-      });
-
-      expect(user.role).toBe(UserRole.professor);
+      const [created] = repository.create.mock.calls[0];
+      expect(created).not.toHaveProperty('id');
     });
 
     it('recusa email já em uso', async () => {
@@ -92,7 +81,7 @@ describe('UsersService', () => {
   describe('update', () => {
     it('recusa trocar para um email já em uso', async () => {
       repository.findById.mockResolvedValue(existing);
-      repository.findByEmail.mockResolvedValue({ ...existing, id: 'outro-id' });
+      repository.findByEmail.mockResolvedValue({ ...existing, id: BigInt(99) });
 
       await expect(service.update(existing.id, { email: 'ocupado@unifesp.br' })).rejects.toThrow(
         UserConflictException,

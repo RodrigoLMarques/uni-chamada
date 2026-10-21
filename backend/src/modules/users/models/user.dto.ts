@@ -1,7 +1,6 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { PaginationQuery } from '../../../shared/pagination';
-import { UserRole } from './user.entity';
 
 export class CreateUserDTO {
   @IsNotEmpty({ message: 'name is required' })
@@ -16,27 +15,20 @@ export class CreateUserDTO {
   @IsString()
   @MinLength(6)
   password: string;
-
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
 }
 
-export class UpdateUserDTO extends PartialType(OmitType(CreateUserDTO, ['password'])) {}
+export class UpdateMeDTO extends PartialType(OmitType(CreateUserDTO, ['password'])) {}
+
+export class UpdateUserDTO extends UpdateMeDTO {}
 
 export class UserFilter extends PaginationQuery {
   @IsOptional()
   @IsString()
   query?: string | null;
-
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
 }
 
 export type UserDTO = {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  role: UserRole;
 };
