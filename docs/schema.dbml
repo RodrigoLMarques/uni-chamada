@@ -1,0 +1,112 @@
+Project unichamada {
+  database_type: 'PostgreSQL'
+  Note: 'Schema MVP. Fonte da verdade continua sendo backend/prisma/schema.prisma.'
+}
+
+Table institution {
+  id bigint [pk, increment]
+  name text [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'Tenant'
+}
+
+Table app_user {
+  id bigint [pk, increment]
+  institution_id bigint [not null, ref: > institution.id]
+  email text [not null, unique]
+  name text [not null]
+  password_hash text [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'Professor. "user" é reservada no Postgres.'
+}
+
+Table student {
+  id bigint [pk, increment]
+  institution_id bigint [not null, ref: > institution.id]
+  ra text [not null]
+  name text [not null]
+
+  indexes {
+    (institution_id, ra) [unique]
+  }
+
+  Note: 'Aluno não faz login; identificado pelo RA.'
+}
+
+Table course {
+  id bigint [pk, increment]
+  institution_id bigint [not null, ref: > institution.id]
+  professor_id bigint [not null, ref: > app_user.id]
+  code text [not null]
+  name text [not null]
+  term text [not null, note: 'ex.: 2026.2']
+
+  indexes {
+    (institution_id, code, term) [unique]
+    professor_id [name: 'idx_course_professor']
+  }
+
+  Note: 'Oferta da disciplina no semestre (turma).'
+}
+
+Table enrollment {
+  course_id bigint [not null, ref: > course.id]
+  student_id bigint [not null, ref: > student.id]
+  status text [not null, default: 'ACTIVE', note: 'CHECK: ACTIVE | DROPPED']
+  enrolled_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (course_id, student_id) [pk]
+  }
+
+  Note: 'Denominador da frequência. Trancamento = status, não DELETE.'
+}
+
+Table student_device {
+  id bigint [pk, increment]
+  student_id bigint [not null, ref: > student.id]
+  token_hash text [not null, unique, note: 'nunca o token em claro']
+  created_at timestamptz [not null, default: `now()`]
+  revoked_at timestamptz
+
+  indexes {
+    student_id [name: 'idx_device_student']
+  }
+
+  Note: 'Cada re-vínculo é uma linha nova.'
+}
+
+Table class_session {
+  id bigint [pk, increment]
+  course_id bigint [not null, ref: > course.id]
+  starts_at timestamptz [not null]
+  opened_at timestamptz [note: 'QR começou a rodar']
+  closed_at timestamptz [note: 'QR parou']
+  confirmed_at timestamptz [note: 'professor confirmou na revisão']
+
+  indexes {
+    (course_id, starts_at) [unique]
+  }
+}
+
+Table attendance {
+  id bigint [pk, increment]
+  class_session_id bigint [not null, ref: > class_session.id]
+  student_id bigint [not null, ref: > student.id]
+  device_id bigint [ref: > student_device.id, note: 'NULL se MANUAL']
+  method text [not null, note: 'CHECK: QR | MANUAL']
+  recorded_at timestamptz [not null, default: `now()`]
+  client_ip inet
+  latitude numeric(9,6)
+  longitude numeric(9,6)
+  accuracy_m real
+
+  indexes {
+    (class_session_id, student_id) [unique]
+    (device_id, class_session_id) [name: 'idx_attendance_device']
+  }
+
+  Note: 'Sinais crus; flags de suspeita são derivadas em query.'
+}
