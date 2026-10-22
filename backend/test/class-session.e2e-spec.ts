@@ -21,8 +21,8 @@ describe('ClassSessions (e2e)', () => {
 
   let token: string;
   let otherToken: string;
-  let courseId: number;
-  let sessionId: number;
+  let courseId: string;
+  let sessionId: string;
 
   const signup = async (userEmail: string) => {
     await request(app.getHttpServer())
@@ -60,7 +60,7 @@ describe('ClassSessions (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.classSession.deleteMany({ where: { courseId: BigInt(courseId) } });
+    await prisma.classSession.deleteMany({ where: { courseId } });
     await prisma.course.deleteMany({ where: { teacher: { email: { in: [email, otherEmail] } } } });
     await prisma.user.deleteMany({ where: { email: { in: [email, otherEmail] } } });
     await app.close();
@@ -243,7 +243,7 @@ describe('ClassSessions (e2e)', () => {
 
   it('GET sessions/:id for a missing session returns 404', async () => {
     await request(app.getHttpServer())
-      .get(`/courses/${courseId}/sessions/99999999`)
+      .get(`/courses/${courseId}/sessions/aaaaaaaaaaaaaaaaaaaaaaaa`)
       .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });

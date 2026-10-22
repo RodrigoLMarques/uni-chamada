@@ -21,8 +21,8 @@ describe('Courses and enrollments (e2e)', () => {
 
   let token: string;
   let otherToken: string;
-  let courseId: number;
-  let studentId: number;
+  let courseId: string;
+  let studentId: string;
 
   const signup = async (userEmail: string) => {
     await request(app.getHttpServer())
@@ -263,7 +263,7 @@ describe('Courses and enrollments (e2e)', () => {
     expect((response.body as EnrollmentDTO).status).toBe('DROPPED');
 
     const still = await prisma.enrollment.findUnique({
-      where: { courseId_studentId: { courseId: BigInt(courseId), studentId: BigInt(studentId) } },
+      where: { courseId_studentId: { courseId, studentId } },
     });
     expect(still).not.toBeNull();
   });
@@ -284,7 +284,7 @@ describe('Courses and enrollments (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(204);
 
-    const student = await prisma.student.findUnique({ where: { id: BigInt(studentId) } });
+    const student = await prisma.student.findUnique({ where: { id: studentId } });
     expect(student).not.toBeNull();
   });
 

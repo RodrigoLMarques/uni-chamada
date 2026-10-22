@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -35,14 +34,10 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.CREATED)
   async create(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
+    @Param('courseId') courseId: string,
     @Body() body: CreateClassSessionDTO,
   ): Promise<ClassSessionDTO> {
-    const session = await this.classSessionsService.create(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      body,
-    );
+    const session = await this.classSessionsService.create(teacher.id, courseId, body);
     return ClassSessionMapper.entityToDTO(session);
   }
 
@@ -50,12 +45,12 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.OK)
   async findAll(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
+    @Param('courseId') courseId: string,
     @Query() filter: ClassSessionFilter,
   ): Promise<PaginatedItems<ClassSessionDTO>> {
     const { data, pagination } = await this.classSessionsService.findAll(
-      BigInt(teacher.id),
-      BigInt(courseId),
+      teacher.id,
+      courseId,
       filter,
     );
     return { data: data.map((s) => ClassSessionMapper.entityToDTO(s)), pagination };
@@ -65,14 +60,10 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.OK)
   async findOne(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
   ): Promise<ClassSessionDTO> {
-    const session = await this.classSessionsService.findById(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      BigInt(sessionId),
-    );
+    const session = await this.classSessionsService.findById(teacher.id, courseId, sessionId);
     return ClassSessionMapper.entityToDTO(session);
   }
 
@@ -80,16 +71,11 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.OK)
   async update(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
     @Body() body: UpdateClassSessionDTO,
   ): Promise<ClassSessionDTO> {
-    const session = await this.classSessionsService.update(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      BigInt(sessionId),
-      body,
-    );
+    const session = await this.classSessionsService.update(teacher.id, courseId, sessionId, body);
     return ClassSessionMapper.entityToDTO(session);
   }
 
@@ -97,16 +83,11 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.OK)
   async open(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
     @Body() body: OpenClassSessionDTO,
   ): Promise<ClassSessionDTO> {
-    const session = await this.classSessionsService.open(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      BigInt(sessionId),
-      body,
-    );
+    const session = await this.classSessionsService.open(teacher.id, courseId, sessionId, body);
     return ClassSessionMapper.entityToDTO(session);
   }
 
@@ -114,14 +95,10 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.OK)
   async close(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
   ): Promise<ClassSessionDTO> {
-    const session = await this.classSessionsService.close(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      BigInt(sessionId),
-    );
+    const session = await this.classSessionsService.close(teacher.id, courseId, sessionId);
     return ClassSessionMapper.entityToDTO(session);
   }
 
@@ -129,14 +106,10 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.OK)
   async confirm(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
   ): Promise<ClassSessionDTO> {
-    const session = await this.classSessionsService.confirm(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      BigInt(sessionId),
-    );
+    const session = await this.classSessionsService.confirm(teacher.id, courseId, sessionId);
     return ClassSessionMapper.entityToDTO(session);
   }
 
@@ -144,9 +117,9 @@ export class ClassSessionsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
   ): Promise<void> {
-    await this.classSessionsService.remove(BigInt(teacher.id), BigInt(courseId), BigInt(sessionId));
+    await this.classSessionsService.remove(teacher.id, courseId, sessionId);
   }
 }

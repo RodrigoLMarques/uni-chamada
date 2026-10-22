@@ -5,10 +5,10 @@ import { CourseNotFoundException } from './exceptions/course-not-found.exception
 import { CourseEntity, CoursePeriod } from './models/course.entity';
 import { CourseRepository } from './repositories/course.repository';
 
-const teacherId = BigInt(1);
+const teacherId = 'teacher1xxxxxxxxxxxxxxxx';
 
 const existing: CourseEntity = {
-  id: BigInt(10),
+  id: 'course10xxxxxxxxxxxxxxxx',
   teacherId,
   code: 'BCM0504',
   name: 'Data Structures and Algorithms',
@@ -28,12 +28,12 @@ describe('CoursesService', () => {
           provide: CourseRepository,
           useValue: {
             create: jest.fn((course: Omit<CourseEntity, 'id'>) =>
-              Promise.resolve({ ...course, id: BigInt(11) }),
+              Promise.resolve({ ...course, id: 'course11xxxxxxxxxxxxxxxx' }),
             ),
             findByIdAndTeacher: jest.fn(),
             findDuplicate: jest.fn(),
             findAllByTeacher: jest.fn(),
-            update: jest.fn((id: bigint, data: Partial<CourseEntity>) =>
+            update: jest.fn((id: string, data: Partial<CourseEntity>) =>
               Promise.resolve({ ...existing, ...data }),
             ),
             remove: jest.fn(),
@@ -99,7 +99,7 @@ describe('CoursesService', () => {
     it('throws 404 for a course owned by another teacher', async () => {
       repository.findByIdAndTeacher.mockResolvedValue(null);
 
-      await expect(service.findById(BigInt(99), existing.id)).rejects.toThrow(
+      await expect(service.findById('teacher99xxxxxxxxxxxxxxx', existing.id)).rejects.toThrow(
         CourseNotFoundException,
       );
     });
@@ -117,7 +117,7 @@ describe('CoursesService', () => {
 
     it('rejects when the new key collides with another course', async () => {
       repository.findByIdAndTeacher.mockResolvedValue(existing);
-      repository.findDuplicate.mockResolvedValue({ ...existing, id: BigInt(77) });
+      repository.findDuplicate.mockResolvedValue({ ...existing, id: 'course77xxxxxxxxxxxxxxxx' });
 
       await expect(
         service.update(teacherId, existing.id, { period: CoursePeriod.EVENING }),
@@ -139,7 +139,7 @@ describe('CoursesService', () => {
     it('throws 404 before removing a course owned by another teacher', async () => {
       repository.findByIdAndTeacher.mockResolvedValue(null);
 
-      await expect(service.remove(BigInt(99), existing.id)).rejects.toThrow(
+      await expect(service.remove('teacher99xxxxxxxxxxxxxxx', existing.id)).rejects.toThrow(
         CourseNotFoundException,
       );
       expect(repository.remove).not.toHaveBeenCalled();

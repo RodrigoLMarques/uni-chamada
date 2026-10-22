@@ -10,9 +10,9 @@ import { ClassSessionEntity } from './models/class-session.entity';
 
 import { ClassSessionRepository } from './repositories/class-session.repository';
 
-const teacherId = BigInt(1);
-const courseId = BigInt(10);
-const sessionId = BigInt(100);
+const teacherId = 'teacher1xxxxxxxxxxxxxxxx';
+const courseId = 'course10xxxxxxxxxxxxxxxx';
+const sessionId = 'session100xxxxxxxxxxxxxx';
 
 const scheduled: ClassSessionEntity = {
   id: sessionId,
@@ -42,13 +42,13 @@ describe('ClassSessionsService', () => {
         {
           provide: ClassSessionRepository,
           useValue: {
-            create: jest.fn((c: bigint, startsAt: Date) =>
+            create: jest.fn((c: string, startsAt: Date) =>
               Promise.resolve({ ...scheduled, courseId: c, startsAt }),
             ),
             findById: jest.fn(),
             findByStartsAt: jest.fn(),
             findAll: jest.fn(),
-            update: jest.fn((_id: bigint, data: Record<string, unknown>) =>
+            update: jest.fn((_id: string, data: Record<string, unknown>) =>
               Promise.resolve({ ...scheduled, ...data }),
             ),
             remove: jest.fn(),
@@ -88,7 +88,9 @@ describe('ClassSessionsService', () => {
       coursesService.findById.mockRejectedValue(new CourseNotFoundException(courseId));
 
       await expect(
-        service.create(BigInt(99), courseId, { startsAt: '2026-11-03T13:00:00.000Z' }),
+        service.create('teacher99xxxxxxxxxxxxxxx', courseId, {
+          startsAt: '2026-11-03T13:00:00.000Z',
+        }),
       ).rejects.toThrow(CourseNotFoundException);
       expect(repository.create).not.toHaveBeenCalled();
     });

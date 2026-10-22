@@ -17,7 +17,7 @@ export class EnrollmentMapper {
   static entityToDTO(entity: EnrollmentEntity): EnrollmentDTO {
     return {
       student: {
-        id: Number(entity.student?.id ?? entity.studentId),
+        id: entity.student?.id ?? entity.studentId,
         ra: entity.student?.ra ?? '',
         name: entity.student?.name ?? '',
         email: entity.student?.email ?? null,

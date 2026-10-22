@@ -3,7 +3,7 @@ import { EnrollmentStatus } from '../../../../generated/prisma/enums';
 export { EnrollmentStatus };
 
 export type StudentEntity = {
-  id: bigint;
+  id: string;
   ra: string;
   name: string;
   email?: string | null;
@@ -12,8 +12,8 @@ export type StudentEntity = {
 };
 
 export type EnrollmentEntity = {
-  courseId: bigint;
-  studentId: bigint;
+  courseId: string;
+  studentId: string;
   status: EnrollmentStatus;
   enrolledAt?: Date | null;
   student?: StudentEntity;

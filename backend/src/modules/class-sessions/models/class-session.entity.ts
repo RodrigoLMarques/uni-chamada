@@ -3,8 +3,8 @@ export const CLASS_SESSION_STATUSES = ['SCHEDULED', 'OPEN', 'CLOSED', 'CONFIRMED
 export type ClassSessionStatus = (typeof CLASS_SESSION_STATUSES)[number];
 
 export type ClassSessionEntity = {
-  id: bigint;
-  courseId: bigint;
+  id: string;
+  courseId: string;
   startsAt: Date;
   openedAt?: Date | null;
   closedAt?: Date | null;

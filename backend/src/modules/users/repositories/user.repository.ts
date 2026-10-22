@@ -16,7 +16,7 @@ export class UserRepository {
     return UserMapper.modelToEntity(created);
   }
 
-  async findById(id: bigint): Promise<UserEntity | null> {
+  async findById(id: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) return null;
     return UserMapper.modelToEntity(user);
@@ -54,7 +54,7 @@ export class UserRepository {
     };
   }
 
-  async update(id: bigint, data: Partial<UserEntity>): Promise<UserEntity> {
+  async update(id: string, data: Partial<UserEntity>): Promise<UserEntity> {
     const updated = await this.prisma.user.update({
       where: { id },
       data: {
@@ -66,7 +66,7 @@ export class UserRepository {
     return UserMapper.modelToEntity(updated);
   }
 
-  async remove(id: bigint): Promise<void> {
+  async remove(id: string): Promise<void> {
     await this.prisma.user.delete({ where: { id } });
   }
 }

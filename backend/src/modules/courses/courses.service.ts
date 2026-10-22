@@ -10,7 +10,7 @@ import { CourseRepository } from './repositories/course.repository';
 export class CoursesService {
   constructor(private readonly courseRepository: CourseRepository) {}
 
-  async create(teacherId: bigint, dto: CreateCourseDTO): Promise<CourseEntity> {
+  async create(teacherId: string, dto: CreateCourseDTO): Promise<CourseEntity> {
     const duplicate = await this.courseRepository.findDuplicate(
       teacherId,
       dto.code,
@@ -28,17 +28,17 @@ export class CoursesService {
     });
   }
 
-  async findAll(teacherId: bigint, filter: CourseFilter): Promise<PaginatedItems<CourseEntity>> {
+  async findAll(teacherId: string, filter: CourseFilter): Promise<PaginatedItems<CourseEntity>> {
     return this.courseRepository.findAllByTeacher(teacherId, filter);
   }
 
-  async findById(teacherId: bigint, id: bigint): Promise<CourseEntity> {
+  async findById(teacherId: string, id: string): Promise<CourseEntity> {
     const course = await this.courseRepository.findByIdAndTeacher(id, teacherId);
     if (!course) throw new CourseNotFoundException(id);
     return course;
   }
 
-  async update(teacherId: bigint, id: bigint, dto: UpdateCourseDTO): Promise<CourseEntity> {
+  async update(teacherId: string, id: string, dto: UpdateCourseDTO): Promise<CourseEntity> {
     const course = await this.findById(teacherId, id);
 
     const code = dto.code ?? course.code;
@@ -53,7 +53,7 @@ export class CoursesService {
     return this.courseRepository.update(id, dto);
   }
 
-  async remove(teacherId: bigint, id: bigint): Promise<void> {
+  async remove(teacherId: string, id: string): Promise<void> {
     await this.findById(teacherId, id);
     await this.courseRepository.remove(id);
   }

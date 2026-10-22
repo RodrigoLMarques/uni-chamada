@@ -43,8 +43,8 @@ export class ClassSessionFilter extends PaginationQuery {
 }
 
 export type ClassSessionDTO = {
-  id: number;
-  courseId: number;
+  id: string;
+  courseId: string;
   startsAt: string;
   openedAt: string | null;
   closedAt: string | null;

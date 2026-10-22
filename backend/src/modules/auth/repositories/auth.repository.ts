@@ -10,11 +10,11 @@ export class AuthRepository {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  async findUserById(id: bigint): Promise<User | null> {
+  async findUserById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  async updatePassword(id: bigint, passwordHash: string): Promise<void> {
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
     await this.prisma.user.update({
       where: { id },
       data: { passwordHash },

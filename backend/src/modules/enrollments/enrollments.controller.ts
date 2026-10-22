@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -34,14 +33,10 @@ export class EnrollmentsController {
   @HttpCode(HttpStatus.CREATED)
   async create(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
+    @Param('courseId') courseId: string,
     @Body() body: CreateEnrollmentDTO,
   ): Promise<EnrollmentDTO> {
-    const enrollment = await this.enrollmentsService.create(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      body,
-    );
+    const enrollment = await this.enrollmentsService.create(teacher.id, courseId, body);
     return EnrollmentMapper.entityToDTO(enrollment);
   }
 
@@ -49,12 +44,12 @@ export class EnrollmentsController {
   @HttpCode(HttpStatus.OK)
   async findAll(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
+    @Param('courseId') courseId: string,
     @Query() filter: EnrollmentFilter,
   ): Promise<PaginatedItems<EnrollmentDTO>> {
     const { data, pagination } = await this.enrollmentsService.findAll(
-      BigInt(teacher.id),
-      BigInt(courseId),
+      teacher.id,
+      courseId,
       filter,
     );
     return {
@@ -67,14 +62,14 @@ export class EnrollmentsController {
   @HttpCode(HttpStatus.OK)
   async updateStatus(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('courseId') courseId: string,
+    @Param('studentId') studentId: string,
     @Body() body: UpdateEnrollmentDTO,
   ): Promise<EnrollmentDTO> {
     const enrollment = await this.enrollmentsService.updateStatus(
-      BigInt(teacher.id),
-      BigInt(courseId),
-      BigInt(studentId),
+      teacher.id,
+      courseId,
+      studentId,
       body,
     );
     return EnrollmentMapper.entityToDTO(enrollment);
@@ -84,9 +79,9 @@ export class EnrollmentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
-    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('courseId') courseId: string,
+    @Param('studentId') studentId: string,
   ): Promise<void> {
-    await this.enrollmentsService.remove(BigInt(teacher.id), BigInt(courseId), BigInt(studentId));
+    await this.enrollmentsService.remove(teacher.id, courseId, studentId);
   }
 }

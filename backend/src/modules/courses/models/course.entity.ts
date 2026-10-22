@@ -3,8 +3,8 @@ import { CoursePeriod } from '../../../../generated/prisma/enums';
 export { CoursePeriod };
 
 export type CourseEntity = {
-  id: bigint;
-  teacherId: bigint;
+  id: string;
+  teacherId: string;
   code: string;
   name: string;
   term: string;

@@ -19,8 +19,8 @@ export class EnrollmentsService {
   ) {}
 
   async create(
-    teacherId: bigint,
-    courseId: bigint,
+    teacherId: string,
+    courseId: string,
     dto: CreateEnrollmentDTO,
   ): Promise<EnrollmentEntity> {
     await this.coursesService.findById(teacherId, courseId);
@@ -35,8 +35,8 @@ export class EnrollmentsService {
   }
 
   async findAll(
-    teacherId: bigint,
-    courseId: bigint,
+    teacherId: string,
+    courseId: string,
     filter: EnrollmentFilter,
   ): Promise<PaginatedItems<EnrollmentEntity>> {
     await this.coursesService.findById(teacherId, courseId);
@@ -44,9 +44,9 @@ export class EnrollmentsService {
   }
 
   async updateStatus(
-    teacherId: bigint,
-    courseId: bigint,
-    studentId: bigint,
+    teacherId: string,
+    courseId: string,
+    studentId: string,
     dto: UpdateEnrollmentDTO,
   ): Promise<EnrollmentEntity> {
     await this.coursesService.findById(teacherId, courseId);
@@ -58,7 +58,7 @@ export class EnrollmentsService {
     return this.enrollmentRepository.updateStatus(courseId, studentId, dto.status);
   }
 
-  async remove(teacherId: bigint, courseId: bigint, studentId: bigint): Promise<void> {
+  async remove(teacherId: string, courseId: string, studentId: string): Promise<void> {
     await this.coursesService.findById(teacherId, courseId);
 
     if (!(await this.enrollmentRepository.find(courseId, studentId))) {

@@ -19,8 +19,8 @@ export class ClassSessionMapper {
 
   static entityToDTO(entity: ClassSessionEntity): ClassSessionDTO {
     return {
-      id: Number(entity.id),
-      courseId: Number(entity.courseId),
+      id: entity.id,
+      courseId: entity.courseId,
       startsAt: entity.startsAt.toISOString(),
       openedAt: entity.openedAt?.toISOString() ?? null,
       closedAt: entity.closedAt?.toISOString() ?? null,

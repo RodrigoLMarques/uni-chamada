@@ -55,7 +55,7 @@ export class EnrollmentFilter extends PaginationQuery {
 
 export type EnrollmentDTO = {
   student: {
-    id: number;
+    id: string;
     ra: string;
     name: string;
     email: string | null;

@@ -21,8 +21,8 @@ export class ClassSessionsService {
   ) {}
 
   async create(
-    teacherId: bigint,
-    courseId: bigint,
+    teacherId: string,
+    courseId: string,
     dto: CreateClassSessionDTO,
   ): Promise<ClassSessionEntity> {
     await this.coursesService.findById(teacherId, courseId);
@@ -36,15 +36,15 @@ export class ClassSessionsService {
   }
 
   async findAll(
-    teacherId: bigint,
-    courseId: bigint,
+    teacherId: string,
+    courseId: string,
     filter: ClassSessionFilter,
   ): Promise<PaginatedItems<ClassSessionEntity>> {
     await this.coursesService.findById(teacherId, courseId);
     return this.classSessionRepository.findAll(courseId, filter);
   }
 
-  async findById(teacherId: bigint, courseId: bigint, id: bigint): Promise<ClassSessionEntity> {
+  async findById(teacherId: string, courseId: string, id: string): Promise<ClassSessionEntity> {
     await this.coursesService.findById(teacherId, courseId);
 
     const session = await this.classSessionRepository.findById(courseId, id);
@@ -53,9 +53,9 @@ export class ClassSessionsService {
   }
 
   async update(
-    teacherId: bigint,
-    courseId: bigint,
-    id: bigint,
+    teacherId: string,
+    courseId: string,
+    id: string,
     dto: UpdateClassSessionDTO,
   ): Promise<ClassSessionEntity> {
     const session = await this.findById(teacherId, courseId, id);
@@ -71,9 +71,9 @@ export class ClassSessionsService {
   }
 
   async open(
-    teacherId: bigint,
-    courseId: bigint,
-    id: bigint,
+    teacherId: string,
+    courseId: string,
+    id: string,
     dto: OpenClassSessionDTO,
   ): Promise<ClassSessionEntity> {
     const session = await this.findById(teacherId, courseId, id);
@@ -93,7 +93,7 @@ export class ClassSessionsService {
     });
   }
 
-  async close(teacherId: bigint, courseId: bigint, id: bigint): Promise<ClassSessionEntity> {
+  async close(teacherId: string, courseId: string, id: string): Promise<ClassSessionEntity> {
     const session = await this.findById(teacherId, courseId, id);
 
     const status = statusOf(session);
@@ -102,7 +102,7 @@ export class ClassSessionsService {
     return this.classSessionRepository.update(id, { closedAt: new Date() });
   }
 
-  async confirm(teacherId: bigint, courseId: bigint, id: bigint): Promise<ClassSessionEntity> {
+  async confirm(teacherId: string, courseId: string, id: string): Promise<ClassSessionEntity> {
     const session = await this.findById(teacherId, courseId, id);
 
     const status = statusOf(session);
@@ -111,7 +111,7 @@ export class ClassSessionsService {
     return this.classSessionRepository.update(id, { confirmedAt: new Date() });
   }
 
-  async remove(teacherId: bigint, courseId: bigint, id: bigint): Promise<void> {
+  async remove(teacherId: string, courseId: string, id: string): Promise<void> {
     const session = await this.findById(teacherId, courseId, id);
 
     const status = statusOf(session);

@@ -7,11 +7,11 @@ import { EnrollmentNotFoundException } from './exceptions/enrollment-not-found.e
 import { EnrollmentEntity, EnrollmentStatus } from './models/enrollment.entity';
 import { EnrollmentRepository } from './repositories/enrollment.repository';
 
-const teacherId = BigInt(1);
-const courseId = BigInt(10);
+const teacherId = 'teacher1xxxxxxxxxxxxxxxx';
+const courseId = 'course10xxxxxxxxxxxxxxxx';
 
 const student = {
-  id: BigInt(5),
+  id: 'student5xxxxxxxxxxxxxxxx',
   ra: '123456',
   name: 'Student',
   email: null,
@@ -43,7 +43,7 @@ describe('EnrollmentsService', () => {
             find: jest.fn(),
             create: jest.fn(() => Promise.resolve(enrollment)),
             findAll: jest.fn(),
-            updateStatus: jest.fn((_c: bigint, _s: bigint, status: EnrollmentStatus) =>
+            updateStatus: jest.fn((_c: string, _s: string, status: EnrollmentStatus) =>
               Promise.resolve({ ...enrollment, status }),
             ),
             remove: jest.fn(),
@@ -84,7 +84,7 @@ describe('EnrollmentsService', () => {
       coursesService.findById.mockRejectedValue(new CourseNotFoundException(courseId));
 
       await expect(
-        service.create(BigInt(99), courseId, { ra: '123456', name: 'Student' }),
+        service.create('teacher99xxxxxxxxxxxxxxx', courseId, { ra: '123456', name: 'Student' }),
       ).rejects.toThrow(CourseNotFoundException);
       expect(repository.findOrCreateStudent).not.toHaveBeenCalled();
     });

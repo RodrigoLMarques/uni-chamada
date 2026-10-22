@@ -18,7 +18,7 @@ enum CoursePeriod {
 }
 
 model User {
-  id           BigInt   @id @default(autoincrement())
+  id           String   @id @default(cuid(2))
   email        String   @unique
   name         String
   passwordHash String   @map("password_hash")
@@ -30,7 +30,7 @@ model User {
 }
 
 model Student {
-  id        BigInt  @id @default(autoincrement())
+  id        String  @id @default(cuid(2))
   ra        String  @unique
   name      String
   email     String?
@@ -43,8 +43,8 @@ model Student {
 }
 
 model Course {
-  id        BigInt       @id @default(autoincrement())
-  teacherId BigInt       @map("teacher_id")
+  id        String       @id @default(cuid(2))
+  teacherId String       @map("teacher_id")
   code      String
   name      String
   term      String
@@ -60,8 +60,8 @@ model Course {
 }
 
 model Enrollment {
-  courseId   BigInt           @map("course_id")
-  studentId  BigInt           @map("student_id")
+  courseId   String           @map("course_id")
+  studentId  String           @map("student_id")
   status     EnrollmentStatus @default(ACTIVE)
   enrolledAt DateTime         @default(now()) @map("enrolled_at") @db.Timestamptz
 
@@ -73,8 +73,8 @@ model Enrollment {
 }
 
 model ClassSession {
-  id          BigInt    @id @default(autoincrement())
-  courseId    BigInt    @map("course_id")
+  id          String    @id @default(cuid(2))
+  courseId    String    @map("course_id")
   startsAt    DateTime  @map("starts_at") @db.Timestamptz
   openedAt    DateTime? @map("opened_at") @db.Timestamptz
   closedAt    DateTime? @map("closed_at") @db.Timestamptz

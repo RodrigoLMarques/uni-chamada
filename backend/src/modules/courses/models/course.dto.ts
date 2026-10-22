@@ -37,7 +37,7 @@ export class CourseFilter extends PaginationQuery {
 }
 
 export type CourseDTO = {
-  id: number;
+  id: string;
   code: string;
   name: string;
   term: string;

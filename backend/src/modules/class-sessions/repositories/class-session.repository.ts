@@ -10,18 +10,18 @@ import { ClassSessionEntity } from '../models/class-session.entity';
 export class ClassSessionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(courseId: bigint, startsAt: Date): Promise<ClassSessionEntity> {
+  async create(courseId: string, startsAt: Date): Promise<ClassSessionEntity> {
     const created = await this.prisma.classSession.create({ data: { courseId, startsAt } });
     return ClassSessionMapper.modelToEntity(created);
   }
 
-  async findById(courseId: bigint, id: bigint): Promise<ClassSessionEntity | null> {
+  async findById(courseId: string, id: string): Promise<ClassSessionEntity | null> {
     const session = await this.prisma.classSession.findFirst({ where: { id, courseId } });
     if (!session) return null;
     return ClassSessionMapper.modelToEntity(session);
   }
 
-  async findByStartsAt(courseId: bigint, startsAt: Date): Promise<ClassSessionEntity | null> {
+  async findByStartsAt(courseId: string, startsAt: Date): Promise<ClassSessionEntity | null> {
     const session = await this.prisma.classSession.findUnique({
       where: { courseId_startsAt: { courseId, startsAt } },
     });
@@ -30,7 +30,7 @@ export class ClassSessionRepository {
   }
 
   async findAll(
-    courseId: bigint,
+    courseId: string,
     filter: ClassSessionFilter,
   ): Promise<PaginatedItems<ClassSessionEntity>> {
     const where: Prisma.ClassSessionWhereInput = { courseId };
@@ -62,12 +62,12 @@ export class ClassSessionRepository {
     };
   }
 
-  async update(id: bigint, data: Prisma.ClassSessionUpdateInput): Promise<ClassSessionEntity> {
+  async update(id: string, data: Prisma.ClassSessionUpdateInput): Promise<ClassSessionEntity> {
     const updated = await this.prisma.classSession.update({ where: { id }, data });
     return ClassSessionMapper.modelToEntity(updated);
   }
 
-  async remove(id: bigint): Promise<void> {
+  async remove(id: string): Promise<void> {
     await this.prisma.classSession.delete({ where: { id } });
   }
 }

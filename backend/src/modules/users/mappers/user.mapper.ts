@@ -23,7 +23,7 @@ export class UserMapper {
 
   static entityToDTO(entity: UserEntity): UserDTO {
     return {
-      id: Number(entity.id),
+      id: entity.id,
       name: entity.name,
       email: entity.email,
     };

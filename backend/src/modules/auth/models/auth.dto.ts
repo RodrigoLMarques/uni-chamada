@@ -17,7 +17,7 @@ export class UpdatePasswordDTO {
 }
 
 export type UserPayload = {
-  id: number;
+  id: string;
   name: string;
   email: string;
 };

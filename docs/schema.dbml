@@ -4,7 +4,7 @@ Project unichamada {
 }
 
 Table app_user {
-  id bigint [pk, increment]
+  id text [pk, note: 'cuid2, 24 chars alfanumericos']
   email text [not null, unique]
   name text [not null]
   password_hash text [not null]
@@ -14,7 +14,7 @@ Table app_user {
 }
 
 Table student {
-  id bigint [pk, increment]
+  id text [pk, note: 'cuid2, 24 chars alfanumericos']
   ra text [not null, unique]
   name text [not null]
   email text
@@ -25,8 +25,8 @@ Table student {
 }
 
 Table course {
-  id bigint [pk, increment]
-  teacher_id bigint [not null, ref: > app_user.id]
+  id text [pk, note: 'cuid2, 24 chars alfanumericos']
+  teacher_id text [not null, ref: > app_user.id]
   code text [not null]
   name text [not null]
   term text [not null, note: 'ex.: 2026.2']
@@ -41,8 +41,8 @@ Table course {
 }
 
 Table enrollment {
-  course_id bigint [not null, ref: > course.id]
-  student_id bigint [not null, ref: > student.id]
+  course_id text [not null, ref: > course.id]
+  student_id text [not null, ref: > student.id]
   status text [not null, default: 'ACTIVE', note: 'CHECK: ACTIVE | DROPPED']
   enrolled_at timestamptz [not null, default: `now()`]
 
@@ -54,8 +54,8 @@ Table enrollment {
 }
 
 Table student_device {
-  id bigint [pk, increment]
-  student_id bigint [not null, ref: > student.id]
+  id text [pk, note: 'cuid2, 24 chars alfanumericos']
+  student_id text [not null, ref: > student.id]
   token_hash text [not null, unique, note: 'nunca o token em claro']
   created_at timestamptz [not null, default: `now()`]
   revoked_at timestamptz
@@ -68,8 +68,8 @@ Table student_device {
 }
 
 Table class_session {
-  id bigint [pk, increment]
-  course_id bigint [not null, ref: > course.id]
+  id text [pk, note: 'cuid2, 24 chars alfanumericos']
+  course_id text [not null, ref: > course.id]
   starts_at timestamptz [not null]
   opened_at timestamptz [note: 'QR comecou a rodar']
   closed_at timestamptz [note: 'QR parou']
@@ -86,10 +86,10 @@ Table class_session {
 }
 
 Table attendance {
-  id bigint [pk, increment]
-  class_session_id bigint [not null, ref: > class_session.id]
-  student_id bigint [not null, ref: > student.id]
-  device_id bigint [ref: > student_device.id, note: 'NULL se MANUAL']
+  id text [pk, note: 'cuid2, 24 chars alfanumericos']
+  class_session_id text [not null, ref: > class_session.id]
+  student_id text [not null, ref: > student.id]
+  device_id text [ref: > student_device.id, note: 'NULL se MANUAL']
   method text [not null, note: 'CHECK: QR | MANUAL']
   recorded_at timestamptz [not null, default: `now()`]
   client_ip inet

@@ -48,7 +48,7 @@ describe('AuthController (e2e)', () => {
     const body = response.body as AuthResponse;
     expect(typeof body.accessToken).toBe('string');
     expect(Object.keys(body.user).sort()).toEqual(['email', 'id', 'name']);
-    expect(typeof body.user.id).toBe('number');
+    expect(body.user.id).toMatch(/^[a-z0-9]{24}$/);
     expect(body.user).toMatchObject({ name: 'Auth E2E', email });
 
     accessToken = body.accessToken;
