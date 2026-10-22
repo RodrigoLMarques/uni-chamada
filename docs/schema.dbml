@@ -64,7 +64,7 @@ Table student_device {
     student_id [name: 'idx_device_student']
   }
 
-  Note: 'Cada re-vinculo e uma linha nova.'
+  Note: 'O token identifica o APARELHO, nao o aluno: student_id e quem o reivindicou primeiro. Se outro RA escaneia do mesmo aparelho, o attendance aponta para o mesmo device_id e o professor ve a flag. Celular novo = linha nova.'
 }
 
 Table class_session {
