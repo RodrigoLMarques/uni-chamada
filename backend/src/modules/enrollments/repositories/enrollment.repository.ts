@@ -3,8 +3,12 @@ import { Prisma } from '../../../../generated/prisma/client';
 import { PaginatedItems, makePagination } from '../../../shared/pagination';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EnrollmentMapper } from '../mappers/enrollment.mapper';
-import { EnrollmentEntity, EnrollmentStatus, StudentEntity } from '../models/enrollment.entity';
-import { CreateEnrollmentDTO, EnrollmentFilter } from '../models/enrollment.dto';
+import { EnrollmentEntity, StudentEntity } from '../models/enrollment.entity';
+import {
+  CreateEnrollmentDTO,
+  EnrollmentFilter,
+  UpdateEnrollmentDTO,
+} from '../models/enrollment.dto';
 
 @Injectable()
 export class EnrollmentRepository {
@@ -113,14 +117,24 @@ export class EnrollmentRepository {
     };
   }
 
-  async updateStatus(
+  async update(
     courseId: string,
     studentId: string,
-    status: EnrollmentStatus,
+    data: UpdateEnrollmentDTO,
   ): Promise<EnrollmentEntity> {
+    const student: Prisma.StudentUpdateInput = {};
+    if (data.name !== undefined) student.name = data.name;
+    if (data.email !== undefined) student.email = data.email;
+    if (data.photoUrl !== undefined) student.photoUrl = data.photoUrl;
+    if (data.entryYear !== undefined) student.entryYear = data.entryYear;
+
+    if (Object.keys(student).length > 0) {
+      await this.prisma.student.update({ where: { id: studentId }, data: student });
+    }
+
     const updated = await this.prisma.enrollment.update({
       where: { courseId_studentId: { courseId, studentId } },
-      data: { status },
+      data: data.status === undefined ? {} : { status: data.status },
       include: { student: true },
     });
     return {
