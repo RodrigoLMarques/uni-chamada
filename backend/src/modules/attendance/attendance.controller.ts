@@ -16,8 +16,20 @@ import type { UserPayload } from '../auth/models/auth.dto';
 import { PaginatedItems } from '../../shared/pagination';
 import { AttendanceService } from './attendance.service';
 import { AttendanceMapper } from './mappers/attendance.mapper';
-import { AttendanceFilter, CreateManualAttendanceDTO } from './models/attendance.dto';
-import type { AttendanceDTO, QrTokenDTO } from './models/attendance.dto';
+import {
+  AttendanceFilter,
+  BulkManualAttendanceDTO,
+  CreateManualAttendanceDTO,
+  RollFilter,
+} from './models/attendance.dto';
+import type {
+  AttendanceDTO,
+  BulkManualAttendanceResultDTO,
+  LiveSessionDTO,
+  QrTokenDTO,
+  RollEntryDTO,
+  RollSummaryDTO,
+} from './models/attendance.dto';
 
 @Controller('courses/:courseId/sessions/:sessionId')
 @UseGuards(JwtAuthGuard)
@@ -44,6 +56,43 @@ export class AttendanceController {
   ): Promise<PaginatedItems<AttendanceDTO>> {
     const listing = await this.attendanceService.findAll(teacher.id, courseId, sessionId, filter);
     return this.attendanceService.toDTO(listing);
+  }
+
+  @Get('live')
+  @HttpCode(HttpStatus.OK)
+  live(
+    @CurrentUser() teacher: UserPayload,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
+  ): Promise<LiveSessionDTO> {
+    return this.attendanceService.live(teacher.id, courseId, sessionId);
+  }
+
+  @Get('roll')
+  @HttpCode(HttpStatus.OK)
+  async roll(
+    @CurrentUser() teacher: UserPayload,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
+    @Query() filter: RollFilter,
+  ): Promise<{
+    data: RollEntryDTO[];
+    pagination: PaginatedItems<RollEntryDTO>['pagination'];
+    summary: RollSummaryDTO;
+  }> {
+    const listing = await this.attendanceService.roll(teacher.id, courseId, sessionId, filter);
+    return this.attendanceService.rollToDTO(listing);
+  }
+
+  @Post('attendance/bulk')
+  @HttpCode(HttpStatus.OK)
+  createManualBulk(
+    @CurrentUser() teacher: UserPayload,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
+    @Body() body: BulkManualAttendanceDTO,
+  ): Promise<BulkManualAttendanceResultDTO> {
+    return this.attendanceService.createManualBulk(teacher.id, courseId, sessionId, body);
   }
 
   @Post('attendance')

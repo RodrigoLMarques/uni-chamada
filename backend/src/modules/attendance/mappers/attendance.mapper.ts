@@ -3,7 +3,7 @@ import {
   Student as StudentModel,
 } from '../../../../generated/prisma/client';
 import { distanceInMeters } from '../../../shared/geo';
-import { AttendanceDTO } from '../models/attendance.dto';
+import { AttendanceDTO, RollEntryDTO } from '../models/attendance.dto';
 import { AttendanceEntity, AttendanceFlags } from '../models/attendance.entity';
 
 type SessionReference = {
@@ -12,6 +12,42 @@ type SessionReference = {
 };
 
 export class AttendanceMapper {
+  static rollEntryToDTO(
+    row: { student: StudentModel; attendance: AttendanceModel | null },
+    session: SessionReference,
+    options: { radiusM: number; sharedDeviceIds: Set<string> },
+  ): RollEntryDTO {
+    const student = {
+      id: row.student.id,
+      ra: row.student.ra,
+      name: row.student.name,
+      photoUrl: row.student.photoUrl,
+    };
+
+    if (!row.attendance) {
+      return {
+        student,
+        status: 'ABSENT',
+        method: null,
+        recordedAt: null,
+        distanceM: null,
+        flags: null,
+      };
+    }
+
+    const entity = AttendanceMapper.modelToEntity(row.attendance);
+    const dto = AttendanceMapper.entityToDTO(entity, session, options);
+
+    return {
+      student,
+      status: 'PRESENT',
+      method: dto.method,
+      recordedAt: dto.recordedAt,
+      distanceM: dto.distanceM,
+      flags: dto.flags,
+    };
+  }
+
   static modelToEntity(model: AttendanceModel & { student?: StudentModel }): AttendanceEntity {
     return {
       id: model.id,

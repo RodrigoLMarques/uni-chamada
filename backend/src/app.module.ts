@@ -13,7 +13,10 @@ import { UsersModule } from './modules/users/users.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot({
-      throttlers: [{ name: 'scan', limit: 10, ttl: 60000 }],
+      throttlers: [
+        { name: 'scan', limit: 10, ttl: 60000 },
+        { name: 'public', limit: 60, ttl: 60000 },
+      ],
     }),
     PrismaModule,
     AuthModule,

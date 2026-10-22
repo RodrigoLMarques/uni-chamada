@@ -60,18 +60,13 @@ export class EnrollmentsController {
 
   @Patch(':studentId')
   @HttpCode(HttpStatus.OK)
-  async updateStatus(
+  async update(
     @CurrentUser() teacher: UserPayload,
     @Param('courseId') courseId: string,
     @Param('studentId') studentId: string,
     @Body() body: UpdateEnrollmentDTO,
   ): Promise<EnrollmentDTO> {
-    const enrollment = await this.enrollmentsService.updateStatus(
-      teacher.id,
-      courseId,
-      studentId,
-      body,
-    );
+    const enrollment = await this.enrollmentsService.update(teacher.id, courseId, studentId, body);
     return EnrollmentMapper.entityToDTO(enrollment);
   }
 

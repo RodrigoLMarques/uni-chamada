@@ -43,7 +43,7 @@ export class EnrollmentsService {
     return this.enrollmentRepository.findAll(courseId, filter);
   }
 
-  async updateStatus(
+  async update(
     teacherId: string,
     courseId: string,
     studentId: string,
@@ -55,7 +55,7 @@ export class EnrollmentsService {
       throw new EnrollmentNotFoundException(studentId);
     }
 
-    return this.enrollmentRepository.updateStatus(courseId, studentId, dto.status);
+    return this.enrollmentRepository.update(courseId, studentId, dto);
   }
 
   async remove(teacherId: string, courseId: string, studentId: string): Promise<void> {

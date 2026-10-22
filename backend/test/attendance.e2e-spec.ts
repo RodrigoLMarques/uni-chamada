@@ -244,19 +244,6 @@ describe('Attendance (e2e)', () => {
     expect(row.flags).toEqual({ noLocation: false, farFromTeacher: false, sharedDevice: false });
   });
 
-  it('POST attendance adds a manual entry for a student without a phone', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/courses/${courseId}/sessions/${sessionId}/attendance`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ ra: raAbsent })
-      .expect(201);
-
-    const body = response.body as AttendanceDTO;
-    expect(body.method).toBe('MANUAL');
-    expect(body.flags.noLocation).toBe(true);
-    expect(body.distanceM).toBeNull();
-  });
-
   it('POST attendance for an already present student returns 409', async () => {
     await request(app.getHttpServer())
       .post(`/courses/${courseId}/sessions/${sessionId}/attendance`)
@@ -265,21 +252,146 @@ describe('Attendance (e2e)', () => {
       .expect(409);
   });
 
-  it('DELETE attendance removes a wrong entry', async () => {
-    const roll = await request(app.getHttpServer())
-      .get(`/courses/${courseId}/sessions/${sessionId}/attendance`)
+  it('POST attendance adds one manual entry, and DELETE takes it back', async () => {
+    const created = await request(app.getHttpServer())
+      .post(`/courses/${courseId}/sessions/${sessionId}/attendance`)
       .set('Authorization', `Bearer ${token}`)
-      .expect(200);
-    expect((roll.body as PaginatedItems<AttendanceDTO>).pagination.totalItems).toBe(2);
+      .send({ ra: raAbsent })
+      .expect(201);
 
-    const absentStudent = (roll.body as PaginatedItems<AttendanceDTO>).data.find(
-      (row) => row.student.ra === raAbsent,
-    );
+    const body = created.body as AttendanceDTO;
+    expect(body.method).toBe('MANUAL');
+    expect(body.flags.noLocation).toBe(true);
+    expect(body.distanceM).toBeNull();
 
     await request(app.getHttpServer())
-      .delete(`/courses/${courseId}/sessions/${sessionId}/attendance/${absentStudent?.student.id}`)
+      .delete(`/courses/${courseId}/sessions/${sessionId}/attendance/${body.student.id}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(204);
+
+    const roll = await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/roll`)
+      .query({ status: 'ABSENT' })
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const absent = (roll.body as { data: { student: { ra: string } }[] }).data;
+    expect(absent.map((row) => row.student.ra)).toContain(raAbsent);
+  });
+
+  it('GET roll lists every enrolled student, present and absent', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/roll`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const body = response.body as {
+      data: { student: { ra: string }; status: string }[];
+      summary: { enrolled: number; present: number; absent: number };
+    };
+
+    expect(body.summary).toEqual({ enrolled: 2, present: 1, absent: 1 });
+
+    const byRa = new Map(body.data.map((row) => [row.student.ra, row.status]));
+    expect(byRa.get(raPresent)).toBe('PRESENT');
+    expect(byRa.get(raAbsent)).toBe('ABSENT');
+    expect(byRa.has(raDropped)).toBe(false);
+  });
+
+  it('GET roll filters by ABSENT so the teacher sees who to mark', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/roll`)
+      .query({ status: 'ABSENT' })
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const body = response.body as { data: { student: { ra: string } }[] };
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].student.ra).toBe(raAbsent);
+  });
+
+  it('GET roll carries the attendance detail on present rows', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/roll`)
+      .query({ status: 'PRESENT' })
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const row = (
+      response.body as {
+        data: { method: string; distanceM: number; flags: Record<string, boolean> }[];
+      }
+    ).data[0];
+    expect(row.method).toBe('QR');
+    expect(row.distanceM).toBeLessThan(100);
+    expect(row.flags.farFromTeacher).toBe(false);
+  });
+
+  it('GET roll of another teacher session returns 404', async () => {
+    const otherEmail = `att-other-${stamp}@unifesp.br`;
+    await request(app.getHttpServer())
+      .post('/users')
+      .send({ name: 'Other', email: otherEmail, password })
+      .expect(201);
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: otherEmail, password })
+      .expect(200);
+    const otherToken = (login.body as AuthResponse).accessToken;
+
+    await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/roll`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .expect(404);
+
+    await prisma.user.deleteMany({ where: { email: otherEmail } });
+  });
+
+  it('POST attendance/bulk reports what it recorded and what it skipped', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/courses/${courseId}/sessions/${sessionId}/attendance/bulk`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ras: [raAbsent, raPresent, raDropped, 'TYPO-RA'] })
+      .expect(200);
+
+    const body = response.body as {
+      recorded: string[];
+      skipped: { ra: string; reason: string }[];
+    };
+
+    expect(body.recorded).toEqual([raAbsent]);
+    expect(body.skipped).toEqual(
+      expect.arrayContaining([
+        { ra: raPresent, reason: 'ALREADY_REGISTERED' },
+        { ra: raDropped, reason: 'NOT_ENROLLED' },
+        { ra: 'TYPO-RA', reason: 'NOT_ENROLLED' },
+      ]),
+    );
+
+    const stored = await prisma.attendance.findMany({ where: { classSessionId: sessionId } });
+    expect(stored).toHaveLength(2);
+    expect(stored.filter((row) => row.method === 'MANUAL')).toHaveLength(1);
+  });
+
+  it('POST attendance/bulk rejects an empty list with 400', async () => {
+    await request(app.getHttpServer())
+      .post(`/courses/${courseId}/sessions/${sessionId}/attendance/bulk`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ras: [] })
+      .expect(400);
+  });
+
+  it('the roll closes at full attendance after the bulk entry', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/roll`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect((response.body as { summary: { present: number; absent: number } }).summary).toEqual({
+      enrolled: 2,
+      present: 2,
+      absent: 0,
+    });
   });
 
   it('POST scan after closing the session returns 409', async () => {

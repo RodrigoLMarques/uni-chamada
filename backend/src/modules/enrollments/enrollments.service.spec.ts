@@ -5,6 +5,7 @@ import { EnrollmentsService } from './enrollments.service';
 import { EnrollmentConflictException } from './exceptions/enrollment-conflict.exception';
 import { EnrollmentNotFoundException } from './exceptions/enrollment-not-found.exception';
 import { EnrollmentEntity, EnrollmentStatus } from './models/enrollment.entity';
+import { UpdateEnrollmentDTO } from './models/enrollment.dto';
 import { EnrollmentRepository } from './repositories/enrollment.repository';
 
 const teacherId = 'teacher1xxxxxxxxxxxxxxxx';
@@ -43,8 +44,8 @@ describe('EnrollmentsService', () => {
             find: jest.fn(),
             create: jest.fn(() => Promise.resolve(enrollment)),
             findAll: jest.fn(),
-            updateStatus: jest.fn((_c: string, _s: string, status: EnrollmentStatus) =>
-              Promise.resolve({ ...enrollment, status }),
+            update: jest.fn((_c: string, _s: string, data: UpdateEnrollmentDTO) =>
+              Promise.resolve({ ...enrollment, ...data }),
             ),
             remove: jest.fn(),
           },
@@ -90,11 +91,11 @@ describe('EnrollmentsService', () => {
     });
   });
 
-  describe('updateStatus', () => {
+  describe('update', () => {
     it('drops by status without deleting the enrollment', async () => {
       repository.find.mockResolvedValue(enrollment);
 
-      const updated = await service.updateStatus(teacherId, courseId, student.id, {
+      const updated = await service.update(teacherId, courseId, student.id, {
         status: EnrollmentStatus.DROPPED,
       });
 
@@ -106,7 +107,7 @@ describe('EnrollmentsService', () => {
       repository.find.mockResolvedValue(null);
 
       await expect(
-        service.updateStatus(teacherId, courseId, student.id, {
+        service.update(teacherId, courseId, student.id, {
           status: EnrollmentStatus.DROPPED,
         }),
       ).rejects.toThrow(EnrollmentNotFoundException);

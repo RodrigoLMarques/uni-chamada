@@ -39,8 +39,29 @@ export class CreateEnrollmentDTO {
 }
 
 export class UpdateEnrollmentDTO {
+  @IsOptional()
   @IsEnum(EnrollmentStatus, { message: 'status must be ACTIVE or DROPPED' })
-  status: EnrollmentStatus;
+  status?: EnrollmentStatus;
+
+  @IsOptional()
+  @IsNotEmpty({ message: 'name must not be empty' })
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'email must be a valid email' })
+  email?: string | null;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'photoUrl must be a valid url' })
+  photoUrl?: string | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1900)
+  @Max(2100)
+  entryYear?: number | null;
 }
 
 export class EnrollmentFilter extends PaginationQuery {
