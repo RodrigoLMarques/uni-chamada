@@ -6,10 +6,11 @@ import { QrTokenService } from './qr/qr-token.service';
 import { AttendanceRepository } from './repositories/attendance.repository';
 import { StudentDeviceRepository } from './repositories/student-device.repository';
 import { ScanController } from './scan.controller';
+import { StudentAttendanceController } from './student-attendance.controller';
 
 @Module({
   imports: [ClassSessionsModule],
-  controllers: [AttendanceController, ScanController],
+  controllers: [AttendanceController, ScanController, StudentAttendanceController],
   providers: [AttendanceService, AttendanceRepository, StudentDeviceRepository, QrTokenService],
   exports: [AttendanceService],
 })

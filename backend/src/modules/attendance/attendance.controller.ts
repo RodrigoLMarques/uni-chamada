@@ -25,6 +25,7 @@ import {
 import type {
   AttendanceDTO,
   BulkManualAttendanceResultDTO,
+  LiveSessionDTO,
   QrTokenDTO,
   RollEntryDTO,
   RollSummaryDTO,
@@ -55,6 +56,16 @@ export class AttendanceController {
   ): Promise<PaginatedItems<AttendanceDTO>> {
     const listing = await this.attendanceService.findAll(teacher.id, courseId, sessionId, filter);
     return this.attendanceService.toDTO(listing);
+  }
+
+  @Get('live')
+  @HttpCode(HttpStatus.OK)
+  live(
+    @CurrentUser() teacher: UserPayload,
+    @Param('courseId') courseId: string,
+    @Param('sessionId') sessionId: string,
+  ): Promise<LiveSessionDTO> {
+    return this.attendanceService.live(teacher.id, courseId, sessionId);
   }
 
   @Get('roll')

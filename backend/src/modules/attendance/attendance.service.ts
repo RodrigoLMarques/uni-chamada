@@ -16,20 +16,26 @@ import {
   CreateManualAttendanceDTO,
   QrTokenDTO,
   RollEntryDTO,
+  LiveSessionDTO,
   RollFilter,
   RollSummaryDTO,
   ScanDTO,
+  StudentAttendanceDTO,
+  StudentSessionDTO,
 } from './models/attendance.dto';
 import { AttendanceEntity, AttendanceMethod } from './models/attendance.entity';
 import { QrTokenService } from './qr/qr-token.service';
 import {
   AttendanceRepository,
+  PaginationQueryLike,
   RollRow,
   newDeviceToken,
 } from './repositories/attendance.repository';
 import { StudentDeviceRepository } from './repositories/student-device.repository';
+import { StudentNotFoundException } from './exceptions/student-not-found.exception';
 
 const DEFAULT_RADIUS_M = 100;
+const RECENT_LIMIT = 10;
 
 export type ScanResult = {
   attendance: AttendanceEntity;
@@ -253,6 +259,87 @@ export class AttendanceService {
       ),
       pagination: listing.entries.pagination,
       summary: listing.summary,
+    };
+  }
+
+  async live(teacherId: string, courseId: string, sessionId: string): Promise<LiveSessionDTO> {
+    const session = await this.classSessionsService.findById(teacherId, courseId, sessionId);
+    const status = statusOf(session);
+
+    const [summary, lastRecordedAt, recent] = await Promise.all([
+      this.attendanceRepository.countRoll(courseId, session.id),
+      this.attendanceRepository.findLastRecordedAt(session.id),
+      this.attendanceRepository.findRecent(session.id, RECENT_LIMIT),
+    ]);
+
+    const qr =
+      status === 'OPEN'
+        ? (() => {
+            const signed = this.qrTokenService.sign(session.id);
+            return {
+              token: signed.token,
+              windowSeconds: signed.windowSeconds,
+              expiresAt: signed.expiresAt.toISOString(),
+            };
+          })()
+        : null;
+
+    return {
+      status,
+      qr,
+      summary,
+      lastRecordedAt: lastRecordedAt?.toISOString() ?? null,
+      recent: recent.map((entity) => ({
+        ra: entity.student?.ra ?? '',
+        name: entity.student?.name ?? '',
+        method: entity.method,
+        recordedAt: entity.recordedAt.toISOString(),
+      })),
+    };
+  }
+
+  async studentAttendance(ra: string): Promise<StudentAttendanceDTO> {
+    const found = await this.attendanceRepository.findStudentCourses(ra);
+    if (!found) throw new StudentNotFoundException(ra);
+
+    return {
+      student: { ra: found.student.ra, name: found.student.name },
+      courses: found.courses.map((row) => ({
+        course: row.course,
+        confirmedSessions: row.confirmedSessions,
+        attendedSessions: row.attendedSessions,
+        pendingSessions: row.pendingSessions,
+        attendanceRate:
+          row.confirmedSessions === 0
+            ? null
+            : Math.round((row.attendedSessions / row.confirmedSessions) * 100) / 100,
+      })),
+    };
+  }
+
+  async studentCourseSessions(
+    ra: string,
+    courseId: string,
+    filter: PaginationQueryLike,
+  ): Promise<PaginatedItems<StudentSessionDTO>> {
+    const student = await this.attendanceRepository.isEnrolled(ra, courseId);
+    if (!student) throw new StudentNotFoundException(ra);
+
+    const { data, pagination } = await this.attendanceRepository.findStudentSessions(
+      student.id,
+      courseId,
+      filter,
+    );
+
+    return {
+      data: data.map((row) => ({
+        sessionId: row.id,
+        startsAt: row.startsAt.toISOString(),
+        status: row.attendance ? 'PRESENT' : 'ABSENT',
+        method: row.attendance?.method ?? null,
+        recordedAt: row.attendance?.recordedAt.toISOString() ?? null,
+      })),
+      pagination,
     };
   }
 
