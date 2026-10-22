@@ -4,8 +4,13 @@ import { AttendanceMethod } from '../../../../generated/prisma/enums';
 import { PaginatedItems, makePagination } from '../../../shared/pagination';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AttendanceMapper } from '../mappers/attendance.mapper';
-import { AttendanceFilter } from '../models/attendance.dto';
+import { AttendanceFilter, RollFilter } from '../models/attendance.dto';
 import { AttendanceEntity } from '../models/attendance.entity';
+import { Prisma } from '../../../../generated/prisma/client';
+import type {
+  Attendance as AttendanceModel,
+  Student as StudentModel,
+} from '../../../../generated/prisma/client';
 
 export type ScanSession = {
   id: string;
@@ -13,6 +18,17 @@ export type ScanSession = {
   openedAt: Date | null;
   closedAt: Date | null;
   confirmedAt: Date | null;
+};
+
+export type RollRow = {
+  student: StudentModel;
+  attendance: AttendanceModel | null;
+};
+
+export type RollSummary = {
+  enrolled: number;
+  present: number;
+  absent: number;
 };
 
 export type CreateAttendanceInput = {
@@ -109,6 +125,107 @@ export class AttendanceRepository {
       having: { deviceId: { _count: { gt: 1 } } },
     });
     return new Set(grouped.map((row) => row.deviceId).filter((id): id is string => id !== null));
+  }
+
+  async findRoll(
+    courseId: string,
+    classSessionId: string,
+    filter: RollFilter,
+  ): Promise<PaginatedItems<RollRow>> {
+    const where: Prisma.EnrollmentWhereInput = { courseId, status: 'ACTIVE' };
+    const student: Prisma.StudentWhereInput = {};
+
+    if (filter.query) {
+      student.OR = [
+        { name: { contains: filter.query, mode: 'insensitive' } },
+        { ra: { contains: filter.query, mode: 'insensitive' } },
+      ];
+    }
+    if (filter.status === 'PRESENT') {
+      student.attendances = { some: { classSessionId } };
+    }
+    if (filter.status === 'ABSENT') {
+      student.attendances = { none: { classSessionId } };
+    }
+    if (Object.keys(student).length > 0) {
+      where.student = student;
+    }
+
+    const [items, totalItems] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where,
+        include: {
+          student: { include: { attendances: { where: { classSessionId } } } },
+        },
+        orderBy: { student: { name: 'asc' } },
+        take: filter.itemsPerPage,
+        skip: (filter.page - 1) * filter.itemsPerPage,
+      }),
+      this.prisma.enrollment.count({ where }),
+    ]);
+
+    return {
+      data: items.map((item) => ({
+        student: item.student,
+        attendance: item.student.attendances[0] ?? null,
+      })),
+      pagination: makePagination(filter.page, filter.itemsPerPage, totalItems),
+    };
+  }
+
+  async countRoll(courseId: string, classSessionId: string): Promise<RollSummary> {
+    const [enrolled, present] = await Promise.all([
+      this.prisma.enrollment.count({ where: { courseId, status: 'ACTIVE' } }),
+      this.prisma.enrollment.count({
+        where: {
+          courseId,
+          status: 'ACTIVE',
+          student: { attendances: { some: { classSessionId } } },
+        },
+      }),
+    ]);
+
+    return { enrolled, present, absent: enrolled - present };
+  }
+
+  async findActiveStudentsByRas(
+    courseId: string,
+    ras: string[],
+  ): Promise<{ id: string; ra: string; name: string }[]> {
+    return this.prisma.student.findMany({
+      where: {
+        ra: { in: ras },
+        enrollments: { some: { courseId, status: 'ACTIVE' } },
+      },
+      select: { id: true, ra: true, name: true },
+    });
+  }
+
+  async findRegisteredStudentIds(
+    classSessionId: string,
+    studentIds: string[],
+  ): Promise<Set<string>> {
+    const rows = await this.prisma.attendance.findMany({
+      where: { classSessionId, studentId: { in: studentIds } },
+      select: { studentId: true },
+    });
+    return new Set(rows.map((row) => row.studentId));
+  }
+
+  async createMany(inputs: CreateAttendanceInput[]): Promise<number> {
+    const { count } = await this.prisma.attendance.createMany({
+      data: inputs.map((input) => ({
+        classSessionId: input.classSessionId,
+        studentId: input.studentId,
+        deviceId: input.deviceId ?? null,
+        method: input.method,
+        clientIp: input.clientIp ?? null,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
+        accuracyM: input.accuracyM ?? null,
+      })),
+    });
+    return count;
   }
 
   async remove(classSessionId: string, studentId: string): Promise<void> {

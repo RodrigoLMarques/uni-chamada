@@ -11,13 +11,22 @@ import { SessionNotOpenException } from './exceptions/session-not-open.exception
 import { AttendanceMapper } from './mappers/attendance.mapper';
 import {
   AttendanceFilter,
+  BulkManualAttendanceDTO,
+  BulkManualAttendanceResultDTO,
   CreateManualAttendanceDTO,
   QrTokenDTO,
+  RollEntryDTO,
+  RollFilter,
+  RollSummaryDTO,
   ScanDTO,
 } from './models/attendance.dto';
 import { AttendanceEntity, AttendanceMethod } from './models/attendance.entity';
 import { QrTokenService } from './qr/qr-token.service';
-import { AttendanceRepository, newDeviceToken } from './repositories/attendance.repository';
+import {
+  AttendanceRepository,
+  RollRow,
+  newDeviceToken,
+} from './repositories/attendance.repository';
 import { StudentDeviceRepository } from './repositories/student-device.repository';
 
 const DEFAULT_RADIUS_M = 100;
@@ -26,6 +35,14 @@ export type ScanResult = {
   attendance: AttendanceEntity;
   studentName: string;
   deviceToken?: string;
+};
+
+export type RollListing = {
+  entries: PaginatedItems<RollRow>;
+  summary: RollSummaryDTO;
+  session: { latitude?: number | null; longitude?: number | null };
+  radiusM: number;
+  sharedDeviceIds: Set<string>;
 };
 
 export type AttendanceListing = {
@@ -149,6 +166,93 @@ export class AttendanceService {
       session: { latitude: session.latitude, longitude: session.longitude },
       radiusM: this.radiusM,
       sharedDeviceIds,
+    };
+  }
+
+  async roll(
+    teacherId: string,
+    courseId: string,
+    sessionId: string,
+    filter: RollFilter,
+  ): Promise<RollListing> {
+    const session = await this.classSessionsService.findById(teacherId, courseId, sessionId);
+
+    const [entries, summary, sharedDeviceIds] = await Promise.all([
+      this.attendanceRepository.findRoll(courseId, session.id, filter),
+      this.attendanceRepository.countRoll(courseId, session.id),
+      this.attendanceRepository.findSharedDeviceIds(session.id),
+    ]);
+
+    return {
+      entries,
+      summary,
+      session: { latitude: session.latitude, longitude: session.longitude },
+      radiusM: this.radiusM,
+      sharedDeviceIds,
+    };
+  }
+
+  async createManualBulk(
+    teacherId: string,
+    courseId: string,
+    sessionId: string,
+    dto: BulkManualAttendanceDTO,
+  ): Promise<BulkManualAttendanceResultDTO> {
+    const session = await this.classSessionsService.findById(teacherId, courseId, sessionId);
+    if (statusOf(session) === 'CONFIRMED') throw new SessionNotOpenException();
+
+    const requested = [...new Set(dto.ras)];
+    const students = await this.attendanceRepository.findActiveStudentsByRas(courseId, requested);
+    const byRa = new Map(students.map((student) => [student.ra, student]));
+
+    const alreadyRegistered = await this.attendanceRepository.findRegisteredStudentIds(
+      session.id,
+      students.map((student) => student.id),
+    );
+
+    const skipped: BulkManualAttendanceResultDTO['skipped'] = [];
+    const toCreate: { id: string; ra: string }[] = [];
+
+    for (const ra of requested) {
+      const student = byRa.get(ra);
+      if (!student) {
+        skipped.push({ ra, reason: 'NOT_ENROLLED' });
+        continue;
+      }
+      if (alreadyRegistered.has(student.id)) {
+        skipped.push({ ra, reason: 'ALREADY_REGISTERED' });
+        continue;
+      }
+      toCreate.push({ id: student.id, ra });
+    }
+
+    if (toCreate.length > 0) {
+      await this.attendanceRepository.createMany(
+        toCreate.map((student) => ({
+          classSessionId: session.id,
+          studentId: student.id,
+          method: AttendanceMethod.MANUAL,
+        })),
+      );
+    }
+
+    return { recorded: toCreate.map((student) => student.ra), skipped };
+  }
+
+  rollToDTO(listing: RollListing): {
+    data: RollEntryDTO[];
+    pagination: PaginatedItems<RollRow>['pagination'];
+    summary: RollSummaryDTO;
+  } {
+    return {
+      data: listing.entries.data.map((row) =>
+        AttendanceMapper.rollEntryToDTO(row, listing.session, {
+          radiusM: listing.radiusM,
+          sharedDeviceIds: listing.sharedDeviceIds,
+        }),
+      ),
+      pagination: listing.entries.pagination,
+      summary: listing.summary,
     };
   }
 
