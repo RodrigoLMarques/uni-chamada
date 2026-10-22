@@ -118,6 +118,35 @@ export type BulkManualAttendanceResultDTO = {
   skipped: { ra: string; reason: 'NOT_ENROLLED' | 'ALREADY_REGISTERED' }[];
 };
 
+export type StudentCourseSummaryDTO = {
+  course: { id: string; code: string; name: string; term: string; period: string };
+  confirmedSessions: number;
+  attendedSessions: number;
+  pendingSessions: number;
+  attendanceRate: number | null;
+};
+
+export type StudentAttendanceDTO = {
+  student: { ra: string; name: string };
+  courses: StudentCourseSummaryDTO[];
+};
+
+export type StudentSessionDTO = {
+  sessionId: string;
+  startsAt: string;
+  status: RollStatus;
+  method: AttendanceMethod | null;
+  recordedAt: string | null;
+};
+
+export type LiveSessionDTO = {
+  status: string;
+  qr: QrTokenDTO | null;
+  summary: RollSummaryDTO;
+  lastRecordedAt: string | null;
+  recent: { ra: string; name: string; method: AttendanceMethod; recordedAt: string }[];
+};
+
 export type AttendanceDTO = {
   student: { id: string; ra: string; name: string; photoUrl: string | null };
   method: AttendanceMethod;

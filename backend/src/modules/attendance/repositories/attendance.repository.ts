@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
-import { AttendanceMethod } from '../../../../generated/prisma/enums';
+import { AttendanceMethod, CoursePeriod } from '../../../../generated/prisma/enums';
 import { PaginatedItems, makePagination } from '../../../shared/pagination';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AttendanceMapper } from '../mappers/attendance.mapper';
@@ -29,6 +29,26 @@ export type RollSummary = {
   enrolled: number;
   present: number;
   absent: number;
+};
+
+export type PaginationQueryLike = { page: number; itemsPerPage: number };
+
+export type StudentCourseRow = {
+  course: { id: string; code: string; name: string; term: string; period: CoursePeriod };
+  confirmedSessions: number;
+  attendedSessions: number;
+  pendingSessions: number;
+};
+
+export type StudentCourses = {
+  student: { id: string; ra: string; name: string };
+  courses: StudentCourseRow[];
+};
+
+export type StudentSessionRow = {
+  id: string;
+  startsAt: Date;
+  attendance: AttendanceModel | null;
 };
 
 export type CreateAttendanceInput = {
@@ -226,6 +246,119 @@ export class AttendanceRepository {
       })),
     });
     return count;
+  }
+
+  async findRecent(classSessionId: string, limit: number): Promise<AttendanceEntity[]> {
+    const rows = await this.prisma.attendance.findMany({
+      where: { classSessionId },
+      include: { student: true },
+      orderBy: { recordedAt: 'desc' },
+      take: limit,
+    });
+    return rows.map((row) => AttendanceMapper.modelToEntity(row));
+  }
+
+  async findLastRecordedAt(classSessionId: string): Promise<Date | null> {
+    const row = await this.prisma.attendance.findFirst({
+      where: { classSessionId },
+      orderBy: { recordedAt: 'desc' },
+      select: { recordedAt: true },
+    });
+    return row?.recordedAt ?? null;
+  }
+
+  async findStudentCourses(ra: string): Promise<StudentCourses | null> {
+    const student = await this.prisma.student.findUnique({
+      where: { ra },
+      select: { id: true, ra: true, name: true },
+    });
+    if (!student) return null;
+
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { studentId: student.id, status: 'ACTIVE' },
+      include: {
+        course: { select: { id: true, code: true, name: true, term: true, period: true } },
+      },
+      orderBy: { course: { term: 'desc' } },
+    });
+
+    const courseIds = enrollments.map((enrollment) => enrollment.courseId);
+    if (courseIds.length === 0) {
+      return { student, courses: [] };
+    }
+
+    const [confirmed, pending, attended] = await Promise.all([
+      this.prisma.classSession.groupBy({
+        by: ['courseId'],
+        where: { courseId: { in: courseIds }, confirmedAt: { not: null } },
+        _count: { _all: true },
+      }),
+      this.prisma.classSession.groupBy({
+        by: ['courseId'],
+        where: { courseId: { in: courseIds }, closedAt: { not: null }, confirmedAt: null },
+        _count: { _all: true },
+      }),
+      this.prisma.attendance.findMany({
+        where: {
+          studentId: student.id,
+          classSession: { courseId: { in: courseIds }, confirmedAt: { not: null } },
+        },
+        select: { classSession: { select: { courseId: true } } },
+      }),
+    ]);
+
+    const confirmedBy = new Map(confirmed.map((row) => [row.courseId, row._count._all]));
+    const pendingBy = new Map(pending.map((row) => [row.courseId, row._count._all]));
+    const attendedBy = new Map<string, number>();
+    for (const row of attended) {
+      const courseId = row.classSession.courseId;
+      attendedBy.set(courseId, (attendedBy.get(courseId) ?? 0) + 1);
+    }
+
+    return {
+      student,
+      courses: enrollments.map((enrollment) => ({
+        course: enrollment.course,
+        confirmedSessions: confirmedBy.get(enrollment.courseId) ?? 0,
+        attendedSessions: attendedBy.get(enrollment.courseId) ?? 0,
+        pendingSessions: pendingBy.get(enrollment.courseId) ?? 0,
+      })),
+    };
+  }
+
+  async isEnrolled(ra: string, courseId: string): Promise<{ id: string } | null> {
+    return this.prisma.student.findFirst({
+      where: { ra, enrollments: { some: { courseId, status: 'ACTIVE' } } },
+      select: { id: true },
+    });
+  }
+
+  async findStudentSessions(
+    studentId: string,
+    courseId: string,
+    filter: PaginationQueryLike,
+  ): Promise<PaginatedItems<StudentSessionRow>> {
+    const where = { courseId, confirmedAt: { not: null } };
+
+    const [items, totalItems] = await Promise.all([
+      this.prisma.classSession.findMany({
+        where,
+        include: { attendances: { where: { studentId } } },
+        orderBy: { startsAt: 'desc' },
+        take: filter.itemsPerPage,
+        skip: (filter.page - 1) * filter.itemsPerPage,
+      }),
+      this.prisma.classSession.count({ where }),
+    ]);
+
+    return {
+      data: items.map((item) => ({
+        id: item.id,
+        startsAt: item.startsAt,
+        attendance: item.attendances[0] ?? null,
+      })),
+      pagination: makePagination(filter.page, filter.itemsPerPage, totalItems),
+    };
   }
 
   async remove(classSessionId: string, studentId: string): Promise<void> {
