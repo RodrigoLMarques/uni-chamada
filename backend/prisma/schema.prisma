@@ -50,8 +50,9 @@ model Course {
   term      String
   period    CoursePeriod
 
-  teacher     User         @relation(fields: [teacherId], references: [id])
+  teacher     User           @relation(fields: [teacherId], references: [id])
   enrollments Enrollment[]
+  sessions    ClassSession[]
 
   @@unique([teacherId, code, term, period])
   @@index([teacherId], map: "idx_course_teacher")
@@ -69,4 +70,21 @@ model Enrollment {
 
   @@id([courseId, studentId])
   @@map("enrollment")
+}
+
+model ClassSession {
+  id          BigInt    @id @default(autoincrement())
+  courseId    BigInt    @map("course_id")
+  startsAt    DateTime  @map("starts_at") @db.Timestamptz
+  openedAt    DateTime? @map("opened_at") @db.Timestamptz
+  closedAt    DateTime? @map("closed_at") @db.Timestamptz
+  confirmedAt DateTime? @map("confirmed_at") @db.Timestamptz
+  latitude    Decimal?  @db.Decimal(9, 6)
+  longitude   Decimal?  @db.Decimal(9, 6)
+  accuracyM   Float?    @map("accuracy_m") @db.Real
+
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([courseId, startsAt])
+  @@map("class_session")
 }
