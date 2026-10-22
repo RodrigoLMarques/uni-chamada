@@ -17,6 +17,11 @@ enum CoursePeriod {
   EVENING
 }
 
+enum AttendanceMethod {
+  QR
+  MANUAL
+}
+
 model User {
   id           String   @id @default(cuid(2))
   email        String   @unique
@@ -38,6 +43,8 @@ model Student {
   entryYear Int?    @map("entry_year")
 
   enrollments Enrollment[]
+  devices     StudentDevice[]
+  attendances Attendance[]
 
   @@map("student")
 }
@@ -83,8 +90,44 @@ model ClassSession {
   longitude   Decimal?  @db.Decimal(9, 6)
   accuracyM   Float?    @map("accuracy_m") @db.Real
 
-  course Course @relation(fields: [courseId], references: [id])
+  course      Course       @relation(fields: [courseId], references: [id])
+  attendances Attendance[]
 
   @@unique([courseId, startsAt])
   @@map("class_session")
+}
+
+model StudentDevice {
+  id        String    @id @default(cuid(2))
+  studentId String    @map("student_id")
+  tokenHash String    @unique @map("token_hash")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+
+  student     Student      @relation(fields: [studentId], references: [id])
+  attendances Attendance[]
+
+  @@index([studentId], map: "idx_device_student")
+  @@map("student_device")
+}
+
+model Attendance {
+  id             String           @id @default(cuid(2))
+  classSessionId String           @map("class_session_id")
+  studentId      String           @map("student_id")
+  deviceId       String?          @map("device_id")
+  method         AttendanceMethod
+  recordedAt     DateTime         @default(now()) @map("recorded_at") @db.Timestamptz
+  clientIp       String?          @map("client_ip") @db.Inet
+  latitude       Decimal?         @db.Decimal(9, 6)
+  longitude      Decimal?         @db.Decimal(9, 6)
+  accuracyM      Float?           @map("accuracy_m") @db.Real
+
+  classSession ClassSession   @relation(fields: [classSessionId], references: [id])
+  student      Student        @relation(fields: [studentId], references: [id])
+  device       StudentDevice? @relation(fields: [deviceId], references: [id])
+
+  @@unique([classSessionId, studentId])
+  @@index([deviceId, classSessionId], map: "idx_attendance_device")
+  @@map("attendance")
 }
