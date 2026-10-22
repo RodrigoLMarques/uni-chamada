@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AttendanceModule } from './modules/attendance/attendance.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClassSessionsModule } from './modules/class-sessions/class-sessions.module';
 import { CoursesModule } from './modules/courses/courses.module';
@@ -10,12 +12,16 @@ import { UsersModule } from './modules/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ name: 'scan', limit: 10, ttl: 60000 }],
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
     CoursesModule,
     EnrollmentsModule,
     ClassSessionsModule,
+    AttendanceModule,
   ],
 })
 export class AppModule {}
