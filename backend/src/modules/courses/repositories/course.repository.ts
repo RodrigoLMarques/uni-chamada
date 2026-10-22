@@ -23,14 +23,14 @@ export class CourseRepository {
     return CourseMapper.modelToEntity(created);
   }
 
-  async findByIdAndTeacher(id: bigint, teacherId: bigint): Promise<CourseEntity | null> {
+  async findByIdAndTeacher(id: string, teacherId: string): Promise<CourseEntity | null> {
     const course = await this.prisma.course.findFirst({ where: { id, teacherId } });
     if (!course) return null;
     return CourseMapper.modelToEntity(course);
   }
 
   async findDuplicate(
-    teacherId: bigint,
+    teacherId: string,
     code: string,
     term: string,
     period: CourseEntity['period'],
@@ -43,7 +43,7 @@ export class CourseRepository {
   }
 
   async findAllByTeacher(
-    teacherId: bigint,
+    teacherId: string,
     filter: CourseFilter,
   ): Promise<PaginatedItems<CourseEntity>> {
     const where: Prisma.CourseWhereInput = { teacherId };
@@ -73,7 +73,7 @@ export class CourseRepository {
     };
   }
 
-  async update(id: bigint, data: Partial<CourseEntity>): Promise<CourseEntity> {
+  async update(id: string, data: Partial<CourseEntity>): Promise<CourseEntity> {
     const updated = await this.prisma.course.update({
       where: { id },
       data: {
@@ -86,7 +86,7 @@ export class CourseRepository {
     return CourseMapper.modelToEntity(updated);
   }
 
-  async remove(id: bigint): Promise<void> {
+  async remove(id: string): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.enrollment.deleteMany({ where: { courseId: id } }),
       this.prisma.course.delete({ where: { id } }),

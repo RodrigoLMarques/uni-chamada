@@ -16,7 +16,7 @@ export class CourseMapper {
 
   static entityToDTO(entity: CourseEntity): CourseDTO {
     return {
-      id: Number(entity.id),
+      id: entity.id,
       code: entity.code,
       name: entity.name,
       term: entity.term,

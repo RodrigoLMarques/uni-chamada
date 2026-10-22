@@ -44,7 +44,7 @@ export class EnrollmentRepository {
     return EnrollmentMapper.studentModelToEntity(completed);
   }
 
-  async find(courseId: bigint, studentId: bigint): Promise<EnrollmentEntity | null> {
+  async find(courseId: string, studentId: string): Promise<EnrollmentEntity | null> {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { courseId_studentId: { courseId, studentId } },
       include: { student: true },
@@ -59,7 +59,7 @@ export class EnrollmentRepository {
     };
   }
 
-  async create(courseId: bigint, studentId: bigint): Promise<EnrollmentEntity> {
+  async create(courseId: string, studentId: string): Promise<EnrollmentEntity> {
     const created = await this.prisma.enrollment.create({
       data: { courseId, studentId },
       include: { student: true },
@@ -74,7 +74,7 @@ export class EnrollmentRepository {
   }
 
   async findAll(
-    courseId: bigint,
+    courseId: string,
     filter: EnrollmentFilter,
   ): Promise<PaginatedItems<EnrollmentEntity>> {
     const where: Prisma.EnrollmentWhereInput = { courseId };
@@ -114,8 +114,8 @@ export class EnrollmentRepository {
   }
 
   async updateStatus(
-    courseId: bigint,
-    studentId: bigint,
+    courseId: string,
+    studentId: string,
     status: EnrollmentStatus,
   ): Promise<EnrollmentEntity> {
     const updated = await this.prisma.enrollment.update({
@@ -132,7 +132,7 @@ export class EnrollmentRepository {
     };
   }
 
-  async remove(courseId: bigint, studentId: bigint): Promise<void> {
+  async remove(courseId: string, studentId: string): Promise<void> {
     await this.prisma.enrollment.delete({
       where: { courseId_studentId: { courseId, studentId } },
     });

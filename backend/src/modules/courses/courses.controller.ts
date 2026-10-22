@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -32,7 +31,7 @@ export class CoursesController {
     @CurrentUser() teacher: UserPayload,
     @Body() body: CreateCourseDTO,
   ): Promise<CourseDTO> {
-    const course = await this.coursesService.create(BigInt(teacher.id), body);
+    const course = await this.coursesService.create(teacher.id, body);
     return CourseMapper.entityToDTO(course);
   }
 
@@ -42,7 +41,7 @@ export class CoursesController {
     @CurrentUser() teacher: UserPayload,
     @Query() filter: CourseFilter,
   ): Promise<PaginatedItems<CourseDTO>> {
-    const { data, pagination } = await this.coursesService.findAll(BigInt(teacher.id), filter);
+    const { data, pagination } = await this.coursesService.findAll(teacher.id, filter);
     return { data: data.map((course) => CourseMapper.entityToDTO(course)), pagination };
   }
 
@@ -50,9 +49,9 @@ export class CoursesController {
   @HttpCode(HttpStatus.OK)
   async findOne(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
+    @Param('courseId') courseId: string,
   ): Promise<CourseDTO> {
-    const course = await this.coursesService.findById(BigInt(teacher.id), BigInt(courseId));
+    const course = await this.coursesService.findById(teacher.id, courseId);
     return CourseMapper.entityToDTO(course);
   }
 
@@ -60,10 +59,10 @@ export class CoursesController {
   @HttpCode(HttpStatus.OK)
   async update(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
+    @Param('courseId') courseId: string,
     @Body() body: UpdateCourseDTO,
   ): Promise<CourseDTO> {
-    const course = await this.coursesService.update(BigInt(teacher.id), BigInt(courseId), body);
+    const course = await this.coursesService.update(teacher.id, courseId, body);
     return CourseMapper.entityToDTO(course);
   }
 
@@ -71,8 +70,8 @@ export class CoursesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @CurrentUser() teacher: UserPayload,
-    @Param('courseId', ParseIntPipe) courseId: number,
+    @Param('courseId') courseId: string,
   ): Promise<void> {
-    await this.coursesService.remove(BigInt(teacher.id), BigInt(courseId));
+    await this.coursesService.remove(teacher.id, courseId);
   }
 }

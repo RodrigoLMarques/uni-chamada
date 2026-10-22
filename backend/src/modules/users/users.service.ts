@@ -34,13 +34,13 @@ export class UsersService {
     return this.userRepository.findAll(filter);
   }
 
-  async findById(id: bigint): Promise<UserEntity> {
+  async findById(id: string): Promise<UserEntity> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new UserNotFoundException(id);
     return user;
   }
 
-  async update(id: bigint, dto: UpdateUserDTO | UpdateMeDTO): Promise<UserEntity> {
+  async update(id: string, dto: UpdateUserDTO | UpdateMeDTO): Promise<UserEntity> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new UserNotFoundException(id);
 
@@ -53,7 +53,7 @@ export class UsersService {
     return this.userRepository.update(id, dto);
   }
 
-  async remove(id: bigint): Promise<void> {
+  async remove(id: string): Promise<void> {
     const user = await this.userRepository.findById(id);
     if (!user) throw new UserNotFoundException(id);
     await this.userRepository.remove(id);

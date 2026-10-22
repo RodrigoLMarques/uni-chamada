@@ -28,7 +28,7 @@ export class UserFilter extends PaginationQuery {
 }
 
 export type UserDTO = {
-  id: number;
+  id: string;
   name: string;
   email: string;
 };

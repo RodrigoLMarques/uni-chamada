@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -39,7 +38,7 @@ export class UsersController {
     @CurrentUser() currentUser: UserPayload,
     @Body() body: UpdateMeDTO,
   ): Promise<UserDTO> {
-    const user = await this.usersService.update(BigInt(currentUser.id), body);
+    const user = await this.usersService.update(currentUser.id, body);
     return UserMapper.entityToDTO(user);
   }
 
@@ -47,7 +46,7 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
   async removeMe(@CurrentUser() currentUser: UserPayload): Promise<void> {
-    await this.usersService.remove(BigInt(currentUser.id));
+    await this.usersService.remove(currentUser.id);
   }
 
   @Get()
@@ -61,26 +60,23 @@ export class UsersController {
   @Get(':userId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('userId', ParseIntPipe) userId: number): Promise<UserDTO> {
-    const user = await this.usersService.findById(BigInt(userId));
+  async findOne(@Param('userId') userId: string): Promise<UserDTO> {
+    const user = await this.usersService.findById(userId);
     return UserMapper.entityToDTO(user);
   }
 
   @Patch(':userId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  async update(
-    @Param('userId', ParseIntPipe) userId: number,
-    @Body() body: UpdateUserDTO,
-  ): Promise<UserDTO> {
-    const user = await this.usersService.update(BigInt(userId), body);
+  async update(@Param('userId') userId: string, @Body() body: UpdateUserDTO): Promise<UserDTO> {
+    const user = await this.usersService.update(userId, body);
     return UserMapper.entityToDTO(user);
   }
 
   @Delete(':userId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('userId', ParseIntPipe) userId: number): Promise<void> {
-    await this.usersService.remove(BigInt(userId));
+  async remove(@Param('userId') userId: string): Promise<void> {
+    await this.usersService.remove(userId);
   }
 }

@@ -15,7 +15,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     stored = {
-      id: BigInt(1),
+      id: 'user1xxxxxxxxxxxxxxxxxxx',
       name: 'Teacher',
       email: 'teacher@unifesp.br',
       passwordHash: await bcrypt.hash('secret123', 4),
@@ -51,7 +51,7 @@ describe('AuthService', () => {
 
       expect(result.accessToken).toBe('token');
       expect(result.user).toEqual({
-        id: Number(stored.id),
+        id: stored.id,
         name: stored.name,
         email: stored.email,
       });
@@ -64,7 +64,7 @@ describe('AuthService', () => {
       await service.login({ email: stored.email, password: 'secret123' });
 
       expect(jwtService.signAsync).toHaveBeenCalledWith({
-        sub: stored.id.toString(),
+        sub: stored.id,
         email: stored.email,
       });
     });

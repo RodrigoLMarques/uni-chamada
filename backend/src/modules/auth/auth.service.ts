@@ -20,20 +20,20 @@ export class AuthService {
     const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordMatch) throw new UnauthorizedException('invalid_credentials');
 
-    const payload: JwtPayload = { sub: user.id.toString(), email: user.email };
+    const payload: JwtPayload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
       accessToken,
       user: {
-        id: Number(user.id),
+        id: user.id,
         name: user.name,
         email: user.email,
       },
     };
   }
 
-  async updatePassword(userId: bigint, dto: UpdatePasswordDTO): Promise<{ message: string }> {
+  async updatePassword(userId: string, dto: UpdatePasswordDTO): Promise<{ message: string }> {
     const user = await this.authRepository.findUserById(userId);
     if (!user) throw new UnauthorizedException();
 

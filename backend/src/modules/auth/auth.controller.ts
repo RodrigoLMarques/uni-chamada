@@ -29,6 +29,6 @@ export class AuthController {
     @CurrentUser() user: UserPayload,
     @Body() body: UpdatePasswordDTO,
   ): Promise<{ message: string }> {
-    return this.authService.updatePassword(BigInt(user.id), body);
+    return this.authService.updatePassword(user.id, body);
   }
 }

@@ -18,7 +18,7 @@ describe('UsersController (e2e)', () => {
   const password = 'secret123';
 
   let token: string;
-  let userId: number;
+  let userId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -47,7 +47,7 @@ describe('UsersController (e2e)', () => {
 
     const body = response.body as UserDTO;
     expect(Object.keys(body).sort()).toEqual(['email', 'id', 'name']);
-    expect(typeof body.id).toBe('number');
+    expect(body.id).toMatch(/^[a-z0-9]{24}$/);
     expect(body).toMatchObject({ name: 'E2E Teacher', email });
 
     userId = body.id;
@@ -60,7 +60,7 @@ describe('UsersController (e2e)', () => {
   });
 
   it('the password is stored hashed in the password_hash column', async () => {
-    const stored = await prisma.user.findUnique({ where: { id: BigInt(userId) } });
+    const stored = await prisma.user.findUnique({ where: { id: userId } });
     expect(stored?.passwordHash).not.toBe(password);
     expect(stored?.passwordHash.startsWith('$2')).toBe(true);
   });
@@ -116,16 +116,16 @@ describe('UsersController (e2e)', () => {
     expect((response.body as UserDTO).email).toBe(email);
   });
 
-  it('GET /users/:id with a non numeric id returns 400', async () => {
+  it('GET /users/:id with a malformed id returns 404', async () => {
     await request(app.getHttpServer())
-      .get('/users/not-a-number')
+      .get('/users/not-a-cuid')
       .set('Authorization', `Bearer ${token}`)
-      .expect(400);
+      .expect(404);
   });
 
   it('GET /users/:id for a missing user returns 404', async () => {
     await request(app.getHttpServer())
-      .get('/users/99999999')
+      .get('/users/aaaaaaaaaaaaaaaaaaaaaaaa')
       .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });
@@ -156,7 +156,7 @@ describe('UsersController (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(204);
 
-    const stored = await prisma.user.findUnique({ where: { id: BigInt(userId) } });
+    const stored = await prisma.user.findUnique({ where: { id: userId } });
     expect(stored).toBeNull();
   });
 

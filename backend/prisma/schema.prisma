@@ -18,7 +18,7 @@ enum CoursePeriod {
 }
 
 model User {
-  id           BigInt   @id @default(autoincrement())
+  id           String   @id @default(cuid(2))
   email        String   @unique
   name         String
   passwordHash String   @map("password_hash")
@@ -30,7 +30,7 @@ model User {
 }
 
 model Student {
-  id        BigInt  @id @default(autoincrement())
+  id        String  @id @default(cuid(2))
   ra        String  @unique
   name      String
   email     String?
@@ -43,15 +43,16 @@ model Student {
 }
 
 model Course {
-  id        BigInt       @id @default(autoincrement())
-  teacherId BigInt       @map("teacher_id")
+  id        String       @id @default(cuid(2))
+  teacherId String       @map("teacher_id")
   code      String
   name      String
   term      String
   period    CoursePeriod
 
-  teacher     User         @relation(fields: [teacherId], references: [id])
+  teacher     User           @relation(fields: [teacherId], references: [id])
   enrollments Enrollment[]
+  sessions    ClassSession[]
 
   @@unique([teacherId, code, term, period])
   @@index([teacherId], map: "idx_course_teacher")
@@ -59,8 +60,8 @@ model Course {
 }
 
 model Enrollment {
-  courseId   BigInt           @map("course_id")
-  studentId  BigInt           @map("student_id")
+  courseId   String           @map("course_id")
+  studentId  String           @map("student_id")
   status     EnrollmentStatus @default(ACTIVE)
   enrolledAt DateTime         @default(now()) @map("enrolled_at") @db.Timestamptz
 
@@ -69,4 +70,21 @@ model Enrollment {
 
   @@id([courseId, studentId])
   @@map("enrollment")
+}
+
+model ClassSession {
+  id          String    @id @default(cuid(2))
+  courseId    String    @map("course_id")
+  startsAt    DateTime  @map("starts_at") @db.Timestamptz
+  openedAt    DateTime? @map("opened_at") @db.Timestamptz
+  closedAt    DateTime? @map("closed_at") @db.Timestamptz
+  confirmedAt DateTime? @map("confirmed_at") @db.Timestamptz
+  latitude    Decimal?  @db.Decimal(9, 6)
+  longitude   Decimal?  @db.Decimal(9, 6)
+  accuracyM   Float?    @map("accuracy_m") @db.Real
+
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([courseId, startsAt])
+  @@map("class_session")
 }

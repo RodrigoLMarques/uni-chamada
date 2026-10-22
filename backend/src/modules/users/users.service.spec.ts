@@ -8,7 +8,7 @@ import { UserRepository } from './repositories/user.repository';
 import { UsersService } from './users.service';
 
 const existing: UserEntity = {
-  id: BigInt(1),
+  id: 'user1xxxxxxxxxxxxxxxxxxx',
   name: 'Teacher',
   email: 'teacher@unifesp.br',
   passwordHash: 'hash',
@@ -21,12 +21,12 @@ describe('UsersService', () => {
   beforeEach(async () => {
     const repositoryMock = {
       create: jest.fn((user: Omit<UserEntity, 'id'>) =>
-        Promise.resolve({ ...user, id: BigInt(2) }),
+        Promise.resolve({ ...user, id: 'user2xxxxxxxxxxxxxxxxxxx' }),
       ),
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findAll: jest.fn(),
-      update: jest.fn((id: bigint, data: Partial<UserEntity>) =>
+      update: jest.fn((id: string, data: Partial<UserEntity>) =>
         Promise.resolve({ ...existing, ...data }),
       ),
       remove: jest.fn(),
@@ -81,7 +81,7 @@ describe('UsersService', () => {
   describe('update', () => {
     it('rejects changing to an email already in use', async () => {
       repository.findById.mockResolvedValue(existing);
-      repository.findByEmail.mockResolvedValue({ ...existing, id: BigInt(99) });
+      repository.findByEmail.mockResolvedValue({ ...existing, id: 'user99xxxxxxxxxxxxxxxxxx' });
 
       await expect(service.update(existing.id, { email: 'taken@unifesp.br' })).rejects.toThrow(
         UserConflictException,

@@ -1,5 +1,5 @@
 export type UserEntity = {
-  id: bigint;
+  id: string;
   name: string;
   email: string;
   passwordHash: string;

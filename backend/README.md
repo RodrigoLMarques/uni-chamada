@@ -58,37 +58,6 @@ npm run prisma:seed       # recria os usuários de exemplo
 Usuários do seed, senha `123456` nos dois: `teacher@unifesp.br` e
 `teacher2@unifesp.br`.
 
-## Turmas e matrículas
-
-Tudo exige token e é escopado ao teacher logado: turma de outro teacher
-responde `404`, não `403`.
-
-| Rota | O que faz |
-|---|---|
-| `POST /courses` | cria turma (`code`, `name`, `term`, `period`) |
-| `GET /courses` | lista as suas (`?query`, `?term`, `?period`) |
-| `GET /courses/:id` | busca |
-| `PATCH /courses/:id` | atualiza |
-| `DELETE /courses/:id` | apaga a turma e as matrículas dela |
-| `POST /courses/:id/enrollments` | matricula por `ra` + `name` |
-| `GET /courses/:id/enrollments` | lista os alunos matriculados (`?query`, `?status`) |
-| `PATCH /courses/:id/enrollments/:studentId` | muda `status` |
-| `DELETE /courses/:id/enrollments/:studentId` | remove a matrícula |
-
-`period` é `FULL_TIME` ou `EVENING`, e entra na chave única junto com
-teacher, código e semestre — então o mesmo código no mesmo semestre em
-períodos diferentes são turmas distintas.
-
-O aluno é identificado pelo RA e não faz login. Além de `ra` e `name`, a
-matrícula aceita `email`, `photoUrl` e `entryYear` — todos opcionais, para
-não travar a importação da lista de alunos.
-
-Matricular com um RA já cadastrado reaproveita o aluno existente: o nome do
-primeiro cadastro é mantido, e os campos opcionais só são preenchidos se
-ainda estiverem vazios — nunca sobrescritos.
-
-Trancamento é `status: DROPPED`, não delete.
-
 ## Outros comandos
 
 ```bash
