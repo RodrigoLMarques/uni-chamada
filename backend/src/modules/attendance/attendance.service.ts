@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PaginatedItems } from '../../shared/pagination';
 import { ClassSessionsService } from '../class-sessions/class-sessions.service';
+import { CoursesService } from '../courses/courses.service';
 import { statusOf } from '../class-sessions/models/class-session.entity';
 import { AlreadyRegisteredException } from './exceptions/already-registered.exception';
 import { AttendanceNotFoundException } from './exceptions/attendance-not-found.exception';
@@ -16,6 +17,8 @@ import {
   CreateManualAttendanceDTO,
   QrTokenDTO,
   RollEntryDTO,
+  CourseReportDTO,
+  CourseReportFilter,
   LiveSessionDTO,
   RollFilter,
   RollSummaryDTO,
@@ -67,6 +70,7 @@ export class AttendanceService {
     private readonly studentDeviceRepository: StudentDeviceRepository,
     private readonly qrTokenService: QrTokenService,
     private readonly classSessionsService: ClassSessionsService,
+    private readonly coursesService: CoursesService,
     configService: ConfigService,
   ) {
     this.radiusM = Number(configService.get('ATTENDANCE_RADIUS_M', DEFAULT_RADIUS_M));
@@ -259,6 +263,41 @@ export class AttendanceService {
       ),
       pagination: listing.entries.pagination,
       summary: listing.summary,
+    };
+  }
+
+  async courseReport(
+    teacherId: string,
+    courseId: string,
+    filter: CourseReportFilter,
+  ): Promise<CourseReportDTO> {
+    await this.coursesService.findById(teacherId, courseId);
+
+    const [counts, report] = await Promise.all([
+      this.attendanceRepository.countCourseSessions(courseId),
+      this.attendanceRepository.findCourseReport(courseId, filter),
+    ]);
+
+    return {
+      data: report.data.map((row) => ({
+        student: {
+          id: row.student.id,
+          ra: row.student.ra,
+          name: row.student.name,
+          photoUrl: row.student.photoUrl,
+        },
+        attendedSessions: row.attendedSessions,
+        attendanceRate:
+          counts.confirmedSessions === 0
+            ? null
+            : Math.round((row.attendedSessions / counts.confirmedSessions) * 100) / 100,
+      })),
+      pagination: report.pagination,
+      summary: {
+        students: report.pagination.totalItems,
+        confirmedSessions: counts.confirmedSessions,
+        pendingSessions: counts.pendingSessions,
+      },
     };
   }
 

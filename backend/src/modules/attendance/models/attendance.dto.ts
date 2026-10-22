@@ -14,6 +14,7 @@ import {
   Min,
 } from 'class-validator';
 import { PaginationQuery } from '../../../shared/pagination';
+import type { PaginationMeta } from '../../../shared/pagination';
 import type { AttendanceFlags, AttendanceMethod } from './attendance.entity';
 
 export class ScanDTO {
@@ -116,6 +117,29 @@ export type RollSummaryDTO = {
 export type BulkManualAttendanceResultDTO = {
   recorded: string[];
   skipped: { ra: string; reason: 'NOT_ENROLLED' | 'ALREADY_REGISTERED' }[];
+};
+
+export class CourseReportFilter extends PaginationQuery {
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  query?: string;
+}
+
+export type CourseReportEntryDTO = {
+  student: { id: string; ra: string; name: string; photoUrl: string | null };
+  attendedSessions: number;
+  attendanceRate: number | null;
+};
+
+export type CourseReportDTO = {
+  data: CourseReportEntryDTO[];
+  pagination: PaginationMeta;
+  summary: {
+    students: number;
+    confirmedSessions: number;
+    pendingSessions: number;
+  };
 };
 
 export type StudentCourseSummaryDTO = {

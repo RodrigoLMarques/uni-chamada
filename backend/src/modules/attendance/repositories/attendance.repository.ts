@@ -4,7 +4,7 @@ import { AttendanceMethod, CoursePeriod } from '../../../../generated/prisma/enu
 import { PaginatedItems, makePagination } from '../../../shared/pagination';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AttendanceMapper } from '../mappers/attendance.mapper';
-import { AttendanceFilter, RollFilter } from '../models/attendance.dto';
+import { AttendanceFilter, CourseReportFilter, RollFilter } from '../models/attendance.dto';
 import { AttendanceEntity } from '../models/attendance.entity';
 import { Prisma } from '../../../../generated/prisma/client';
 import type {
@@ -49,6 +49,16 @@ export type StudentSessionRow = {
   id: string;
   startsAt: Date;
   attendance: AttendanceModel | null;
+};
+
+export type CourseSessionCounts = {
+  confirmedSessions: number;
+  pendingSessions: number;
+};
+
+export type CourseReportRow = {
+  student: StudentModel;
+  attendedSessions: number;
 };
 
 export type CreateAttendanceInput = {
@@ -356,6 +366,67 @@ export class AttendanceRepository {
         id: item.id,
         startsAt: item.startsAt,
         attendance: item.attendances[0] ?? null,
+      })),
+      pagination: makePagination(filter.page, filter.itemsPerPage, totalItems),
+    };
+  }
+
+  async countCourseSessions(courseId: string): Promise<CourseSessionCounts> {
+    const [confirmed, pending] = await Promise.all([
+      this.prisma.classSession.count({ where: { courseId, confirmedAt: { not: null } } }),
+      this.prisma.classSession.count({
+        where: { courseId, closedAt: { not: null }, confirmedAt: null },
+      }),
+    ]);
+    return { confirmedSessions: confirmed, pendingSessions: pending };
+  }
+
+  async findCourseReport(
+    courseId: string,
+    filter: CourseReportFilter,
+  ): Promise<PaginatedItems<CourseReportRow>> {
+    const where: Prisma.EnrollmentWhereInput = { courseId, status: 'ACTIVE' };
+
+    if (filter.query) {
+      where.student = {
+        OR: [
+          { name: { contains: filter.query, mode: 'insensitive' } },
+          { ra: { contains: filter.query, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const [enrollments, totalItems] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where,
+        include: { student: true },
+        orderBy: { student: { name: 'asc' } },
+        take: filter.itemsPerPage,
+        skip: (filter.page - 1) * filter.itemsPerPage,
+      }),
+      this.prisma.enrollment.count({ where }),
+    ]);
+
+    const studentIds = enrollments.map((enrollment) => enrollment.studentId);
+
+    const attended =
+      studentIds.length === 0
+        ? []
+        : await this.prisma.attendance.groupBy({
+            by: ['studentId'],
+            where: {
+              studentId: { in: studentIds },
+              classSession: { courseId, confirmedAt: { not: null } },
+            },
+            _count: { _all: true },
+          });
+
+    const attendedBy = new Map(attended.map((row) => [row.studentId, row._count._all]));
+
+    return {
+      data: enrollments.map((enrollment) => ({
+        student: enrollment.student,
+        attendedSessions: attendedBy.get(enrollment.studentId) ?? 0,
       })),
       pagination: makePagination(filter.page, filter.itemsPerPage, totalItems),
     };
