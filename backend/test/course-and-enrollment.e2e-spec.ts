@@ -278,6 +278,75 @@ describe('Courses and enrollments (e2e)', () => {
     expect((response.body as PaginatedItems<EnrollmentDTO>).pagination.totalItems).toBe(0);
   });
 
+  it('PATCH enrollments updates the student data', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/courses/${courseId}/enrollments/${studentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Fixed Name',
+        email: `fixed-${stamp}@unifesp.br`,
+        photoUrl: 'https://example.com/fixed.jpg',
+        entryYear: 2022,
+      })
+      .expect(200);
+
+    const body = response.body as EnrollmentDTO;
+    expect(body.student).toMatchObject({
+      name: 'Fixed Name',
+      email: `fixed-${stamp}@unifesp.br`,
+      photoUrl: 'https://example.com/fixed.jpg',
+      entryYear: 2022,
+    });
+  });
+
+  it('PATCH enrollments overwrites a value that was already filled', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/courses/${courseId}/enrollments/${studentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ entryYear: 2021 })
+      .expect(200);
+
+    expect((response.body as EnrollmentDTO).student.entryYear).toBe(2021);
+  });
+
+  it('PATCH enrollments clears an optional field with null', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/courses/${courseId}/enrollments/${studentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: null })
+      .expect(200);
+
+    expect((response.body as EnrollmentDTO).student.email).toBeNull();
+  });
+
+  it('PATCH enrollments updates data and status together', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/courses/${courseId}/enrollments/${studentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Back Again', status: 'ACTIVE' })
+      .expect(200);
+
+    const body = response.body as EnrollmentDTO;
+    expect(body.student.name).toBe('Back Again');
+    expect(body.status).toBe('ACTIVE');
+  });
+
+  it('PATCH enrollments rejects an invalid email with 400', async () => {
+    await request(app.getHttpServer())
+      .patch(`/courses/${courseId}/enrollments/${studentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: 'not-an-email' })
+      .expect(400);
+  });
+
+  it('PATCH enrollments rejects changing the ra with 400', async () => {
+    await request(app.getHttpServer())
+      .patch(`/courses/${courseId}/enrollments/${studentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ra: 'OTHER-RA' })
+      .expect(400);
+  });
+
   it('DELETE enrollments removes the enrollment but keeps the student', async () => {
     await request(app.getHttpServer())
       .delete(`/courses/${courseId}/enrollments/${studentId}`)
