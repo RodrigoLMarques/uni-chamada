@@ -82,7 +82,7 @@ Table class_session {
     (course_id, starts_at) [unique]
   }
 
-  Note: 'O QR e stateless: HMAC(class_session_id + janela de 3s + secret). Nao ha tabela de token.'
+  Note: 'O QR e stateless: HMAC(class_session_id + janela de 3s + secret). Nao ha tabela de token. O status (SCHEDULED/OPEN/CLOSED/CONFIRMED) e derivado dos timestamps, nao e coluna.'
 }
 
 Table attendance {
