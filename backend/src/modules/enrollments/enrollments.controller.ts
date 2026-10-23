@@ -16,9 +16,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { UserPayload } from '../auth/models/auth.dto';
 import { PaginatedItems } from '../../shared/pagination';
 import { EnrollmentsService } from './enrollments.service';
-import { EnrollmentMapper } from './mappers/enrollment.mapper';
 import {
   CreateEnrollmentDTO,
+  CreateEnrollmentFromUnifespDTO,
   EnrollmentFilter,
   UpdateEnrollmentDTO,
 } from './models/enrollment.dto';
@@ -37,7 +37,18 @@ export class EnrollmentsController {
     @Body() body: CreateEnrollmentDTO,
   ): Promise<EnrollmentDTO> {
     const enrollment = await this.enrollmentsService.create(teacher.id, courseId, body);
-    return EnrollmentMapper.entityToDTO(enrollment);
+    return this.enrollmentsService.toDTO(enrollment);
+  }
+
+  @Post('from-unifesp')
+  @HttpCode(HttpStatus.CREATED)
+  async createFromUnifesp(
+    @CurrentUser() teacher: UserPayload,
+    @Param('courseId') courseId: string,
+    @Body() body: CreateEnrollmentFromUnifespDTO,
+  ): Promise<EnrollmentDTO> {
+    const enrollment = await this.enrollmentsService.createFromUnifesp(teacher.id, courseId, body);
+    return this.enrollmentsService.toDTO(enrollment);
   }
 
   @Get()
@@ -53,7 +64,7 @@ export class EnrollmentsController {
       filter,
     );
     return {
-      data: data.map((enrollment) => EnrollmentMapper.entityToDTO(enrollment)),
+      data: this.enrollmentsService.toDTOList(data),
       pagination,
     };
   }
@@ -67,7 +78,7 @@ export class EnrollmentsController {
     @Body() body: UpdateEnrollmentDTO,
   ): Promise<EnrollmentDTO> {
     const enrollment = await this.enrollmentsService.update(teacher.id, courseId, studentId, body);
-    return EnrollmentMapper.entityToDTO(enrollment);
+    return this.enrollmentsService.toDTO(enrollment);
   }
 
   @Delete(':studentId')
