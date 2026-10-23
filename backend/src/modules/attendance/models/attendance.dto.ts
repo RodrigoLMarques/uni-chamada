@@ -100,7 +100,13 @@ export type QrTokenDTO = {
 };
 
 export type RollEntryDTO = {
-  student: { id: string; ra: string; name: string; photoUrl: string | null };
+  student: {
+    id: string;
+    ra: string;
+    name: string;
+    photoUrl: string | null;
+    photoKey?: string | null;
+  };
   status: RollStatus;
   method: AttendanceMethod | null;
   recordedAt: string | null;
@@ -127,7 +133,13 @@ export class CourseReportFilter extends PaginationQuery {
 }
 
 export type CourseReportEntryDTO = {
-  student: { id: string; ra: string; name: string; photoUrl: string | null };
+  student: {
+    id: string;
+    ra: string;
+    name: string;
+    photoUrl: string | null;
+    photoKey?: string | null;
+  };
   attendedSessions: number;
   attendanceRate: number | null;
 };
@@ -172,7 +184,13 @@ export type LiveSessionDTO = {
 };
 
 export type AttendanceDTO = {
-  student: { id: string; ra: string; name: string; photoUrl: string | null };
+  student: {
+    id: string;
+    ra: string;
+    name: string;
+    photoUrl: string | null;
+    photoKey?: string | null;
+  };
   method: AttendanceMethod;
   recordedAt: string;
   latitude: number | null;

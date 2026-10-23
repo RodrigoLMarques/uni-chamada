@@ -22,6 +22,7 @@ export class AttendanceMapper {
       ra: row.student.ra,
       name: row.student.name,
       photoUrl: row.student.photoUrl,
+      photoKey: row.student.photoKey,
     };
 
     if (!row.attendance) {
@@ -66,6 +67,7 @@ export class AttendanceMapper {
             ra: model.student.ra,
             name: model.student.name,
             photoUrl: model.student.photoUrl,
+            photoKey: model.student.photoKey,
           }
         : undefined,
     };
@@ -105,6 +107,7 @@ export class AttendanceMapper {
         ra: entity.student?.ra ?? '',
         name: entity.student?.name ?? '',
         photoUrl: entity.student?.photoUrl ?? null,
+        photoKey: entity.student?.photoKey ?? null,
       },
       method: entity.method,
       recordedAt: entity.recordedAt.toISOString(),

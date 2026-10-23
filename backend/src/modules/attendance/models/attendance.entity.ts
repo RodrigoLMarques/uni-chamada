@@ -7,6 +7,7 @@ export type AttendanceStudent = {
   ra: string;
   name: string;
   photoUrl?: string | null;
+  photoKey?: string | null;
 };
 
 export type AttendanceEntity = {

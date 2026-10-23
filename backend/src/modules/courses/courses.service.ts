@@ -3,7 +3,7 @@ import { PaginatedItems } from '../../shared/pagination';
 import { CourseConflictException } from './exceptions/course-conflict.exception';
 import { CourseNotFoundException } from './exceptions/course-not-found.exception';
 import { CourseFilter, CreateCourseDTO, UpdateCourseDTO } from './models/course.dto';
-import { CourseEntity } from './models/course.entity';
+import { CourseEntity, Institution } from './models/course.entity';
 import { CourseRepository } from './repositories/course.repository';
 
 @Injectable()
@@ -25,6 +25,7 @@ export class CoursesService {
       name: dto.name,
       term: dto.term,
       period: dto.period,
+      institution: dto.institution ?? Institution.OTHER,
     });
   }
 

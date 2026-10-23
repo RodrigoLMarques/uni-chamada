@@ -7,6 +7,7 @@ import {
   IsString,
   IsUrl,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -36,6 +37,22 @@ export class CreateEnrollmentDTO {
   @Min(1900)
   @Max(2100)
   entryYear?: number;
+}
+
+export class CreateEnrollmentFromUnifespDTO {
+  @IsNotEmpty({ message: 'handle is required' })
+  @IsString()
+  @MaxLength(2048)
+  handle: string;
+
+  @IsOptional()
+  @IsNotEmpty({ message: 'name must not be empty' })
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'email must be a valid email' })
+  email?: string;
 }
 
 export class UpdateEnrollmentDTO {
@@ -81,6 +98,7 @@ export type EnrollmentDTO = {
     name: string;
     email: string | null;
     photoUrl: string | null;
+    photoKey?: string | null;
     entryYear: number | null;
   };
   status: EnrollmentStatus;

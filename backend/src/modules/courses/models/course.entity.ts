@@ -1,6 +1,6 @@
-import { CoursePeriod } from '../../../../generated/prisma/enums';
+import { CoursePeriod, Institution } from '../../../../generated/prisma/enums';
 
-export { CoursePeriod };
+export { CoursePeriod, Institution };
 
 export type CourseEntity = {
   id: string;
@@ -9,4 +9,5 @@ export type CourseEntity = {
   name: string;
   term: string;
   period: CoursePeriod;
+  institution: Institution;
 };

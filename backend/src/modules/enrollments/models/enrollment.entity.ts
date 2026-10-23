@@ -8,6 +8,7 @@ export type StudentEntity = {
   name: string;
   email?: string | null;
   photoUrl?: string | null;
+  photoKey?: string | null;
   entryYear?: number | null;
 };
 

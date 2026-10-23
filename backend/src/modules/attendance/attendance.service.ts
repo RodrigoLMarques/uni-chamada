@@ -285,6 +285,7 @@ export class AttendanceService {
           ra: row.student.ra,
           name: row.student.name,
           photoUrl: row.student.photoUrl,
+          photoKey: row.student.photoKey,
         },
         attendedSessions: row.attendedSessions,
         attendanceRate:

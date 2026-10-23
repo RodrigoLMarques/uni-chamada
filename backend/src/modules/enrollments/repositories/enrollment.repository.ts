@@ -14,6 +14,40 @@ import {
 export class EnrollmentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async upsertUnifespStudent(input: {
+    ra: string;
+    name: string;
+    email?: string | null;
+    photoKey?: string | null;
+    entryYear?: number | null;
+  }): Promise<StudentEntity> {
+    const existing = await this.prisma.student.findUnique({ where: { ra: input.ra } });
+
+    if (!existing) {
+      const created = await this.prisma.student.create({
+        data: {
+          ra: input.ra,
+          name: input.name,
+          email: input.email,
+          photoKey: input.photoKey,
+          entryYear: input.entryYear,
+        },
+      });
+      return EnrollmentMapper.studentModelToEntity(created);
+    }
+
+    const updated = await this.prisma.student.update({
+      where: { id: existing.id },
+      data: {
+        name: input.name,
+        email: input.email ?? existing.email,
+        photoKey: input.photoKey ?? existing.photoKey,
+        entryYear: input.entryYear ?? existing.entryYear,
+      },
+    });
+    return EnrollmentMapper.studentModelToEntity(updated);
+  }
+
   async findOrCreateStudent(dto: CreateEnrollmentDTO): Promise<StudentEntity> {
     const existing = await this.prisma.student.findUnique({ where: { ra: dto.ra } });
 

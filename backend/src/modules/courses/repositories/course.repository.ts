@@ -18,6 +18,7 @@ export class CourseRepository {
         name: course.name,
         term: course.term,
         period: course.period,
+        institution: course.institution,
       },
     });
     return CourseMapper.modelToEntity(created);
@@ -56,6 +57,7 @@ export class CourseRepository {
     }
     if (filter.term) where.term = filter.term;
     if (filter.period) where.period = filter.period;
+    if (filter.institution) where.institution = filter.institution;
 
     const [items, totalItems] = await Promise.all([
       this.prisma.course.findMany({
@@ -81,6 +83,7 @@ export class CourseRepository {
         name: data.name,
         term: data.term,
         period: data.period,
+        institution: data.institution,
       },
     });
     return CourseMapper.modelToEntity(updated);

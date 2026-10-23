@@ -10,6 +10,7 @@ export class EnrollmentMapper {
       name: model.name,
       email: model.email,
       photoUrl: model.photoUrl,
+      photoKey: model.photoKey,
       entryYear: model.entryYear,
     };
   }
@@ -22,6 +23,7 @@ export class EnrollmentMapper {
         name: entity.student?.name ?? '',
         email: entity.student?.email ?? null,
         photoUrl: entity.student?.photoUrl ?? null,
+        photoKey: entity.student?.photoKey ?? null,
         entryYear: entity.student?.entryYear ?? null,
       },
       status: entity.status,
