@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CoursesService } from './courses.service';
 import { CourseConflictException } from './exceptions/course-conflict.exception';
 import { CourseNotFoundException } from './exceptions/course-not-found.exception';
-import { CourseEntity, CoursePeriod } from './models/course.entity';
+import { CourseEntity, CoursePeriod, Institution } from './models/course.entity';
 import { CourseRepository } from './repositories/course.repository';
 
 const teacherId = 'teacher1xxxxxxxxxxxxxxxx';
@@ -14,6 +14,7 @@ const existing: CourseEntity = {
   name: 'Data Structures and Algorithms',
   term: '2026.2',
   period: CoursePeriod.FULL_TIME,
+  institution: Institution.OTHER,
 };
 
 describe('CoursesService', () => {

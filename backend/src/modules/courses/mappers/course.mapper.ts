@@ -11,6 +11,7 @@ export class CourseMapper {
       name: model.name,
       term: model.term,
       period: model.period,
+      institution: model.institution,
     };
   }
 
@@ -21,6 +22,7 @@ export class CourseMapper {
       name: entity.name,
       term: entity.term,
       period: entity.period,
+      institution: entity.institution,
     };
   }
 }

@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PaginationQuery } from '../../../shared/pagination';
-import { CoursePeriod } from './course.entity';
+import { CoursePeriod, Institution } from './course.entity';
 
 export class CreateCourseDTO {
   @IsNotEmpty({ message: 'code is required' })
@@ -18,6 +18,10 @@ export class CreateCourseDTO {
 
   @IsEnum(CoursePeriod, { message: 'period must be FULL_TIME or EVENING' })
   period: CoursePeriod;
+
+  @IsOptional()
+  @IsEnum(Institution, { message: 'institution must be UNIFESP or OTHER' })
+  institution?: Institution;
 }
 
 export class UpdateCourseDTO extends PartialType(CreateCourseDTO) {}
@@ -34,6 +38,10 @@ export class CourseFilter extends PaginationQuery {
   @IsOptional()
   @IsEnum(CoursePeriod)
   period?: CoursePeriod;
+
+  @IsOptional()
+  @IsEnum(Institution)
+  institution?: Institution;
 }
 
 export type CourseDTO = {
@@ -42,4 +50,5 @@ export type CourseDTO = {
   name: string;
   term: string;
   period: CoursePeriod;
+  institution: Institution;
 };
