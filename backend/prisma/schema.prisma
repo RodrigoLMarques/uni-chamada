@@ -22,6 +22,11 @@ enum AttendanceMethod {
   MANUAL
 }
 
+enum Institution {
+  UNIFESP
+  OTHER
+}
+
 model User {
   id           String   @id @default(cuid(2))
   email        String   @unique
@@ -40,6 +45,7 @@ model Student {
   name      String
   email     String?
   photoUrl  String? @map("photo_url")
+  photoKey  String? @map("photo_key")
   entryYear Int?    @map("entry_year")
 
   enrollments Enrollment[]
@@ -50,12 +56,13 @@ model Student {
 }
 
 model Course {
-  id        String       @id @default(cuid(2))
-  teacherId String       @map("teacher_id")
-  code      String
-  name      String
-  term      String
-  period    CoursePeriod
+  id          String       @id @default(cuid(2))
+  teacherId   String       @map("teacher_id")
+  code        String
+  name        String
+  term        String
+  period      CoursePeriod
+  institution Institution  @default(OTHER)
 
   teacher     User           @relation(fields: [teacherId], references: [id])
   enrollments Enrollment[]
