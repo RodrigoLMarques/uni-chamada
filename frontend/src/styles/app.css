@@ -1,0 +1,266 @@
+/* Estruturas de página que o design system não cobre: o enquadramento do shell e
+   o menu do perfil. Tudo com os tokens do sistema, nenhum valor literal. */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--text-type-body);
+  font-family: var(--font-sans);
+}
+
+/* relative ancora o menu do perfil, que é posicionado a partir do canto da lateral. */
+.uc-app {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* 999 faz o conteúdo levar toda a sobra; a base de 560px é o ponto em que a
+   lateral desce para cima dele em vez de espremer a tabela. */
+.uc-app-main {
+  flex: 999 1 560px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@media (max-width: 767px) {
+  .uc-app-main {
+    padding: var(--space-6) var(--space-4);
+  }
+}
+
+/* A lateral vira barra superior abaixo de 1280px: some a borda da direita e a
+   largura fixa, e os itens fluem em linha. */
+@media (max-width: 1279px) {
+  .uc-sidenav {
+    width: 100%;
+    flex: 1 1 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .uc-sidenav-brand {
+    padding: 0;
+  }
+
+  .uc-sidenav-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .uc-sidenav-section-label {
+    display: none;
+  }
+
+  .uc-sidenav-foot {
+    margin-left: auto;
+    padding: 0;
+  }
+}
+
+.uc-sidenav-section-label {
+  margin: var(--space-4) 0 0;
+  padding: 0 var(--space-3);
+  font: var(--text-type-caption);
+  color: var(--text-subtle);
+}
+
+.uc-sidenav-course-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A lateral tem 232px e nomes brasileiros são longos: avatar menor e folga
+   apertada para o nome ocupar o máximo antes de reticenciar. */
+.uc-sidenav-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  font: var(--text-type-body-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.uc-sidenav-profile:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.uc-sidenav-profile:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.uc-sidenav-profile-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uc-profile-menu {
+  position: absolute;
+  left: var(--space-4);
+  bottom: calc(var(--space-16) + var(--space-6));
+  z-index: var(--z-overlay);
+  width: 320px;
+  max-width: calc(100vw - var(--space-8));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+@media (max-width: 1279px) {
+  .uc-profile-menu {
+    left: auto;
+    right: var(--space-4);
+    top: calc(var(--space-16) + var(--space-2));
+    bottom: auto;
+  }
+}
+
+.uc-profile-menu-identity {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.uc-profile-menu-name {
+  font: var(--text-type-body-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.uc-profile-menu-email {
+  font: var(--text-type-label);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uc-profile-menu-rule {
+  margin: var(--space-2) 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.uc-profile-menu-theme {
+  padding: var(--space-2) var(--space-3);
+}
+
+.uc-profile-menu-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font: var(--text-type-body-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.uc-profile-menu-copy:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+}
+
+.uc-profile-menu-copy:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.uc-profile-menu-copy svg {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.uc-profile-menu-copy > span {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.uc-profile-menu-copy .uc-code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Telas centradas: login e consulta pública. */
+.uc-centered {
+  min-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-4);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.uc-centered-panel {
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+
+.uc-page-title {
+  margin: 0;
+  font: var(--text-type-title);
+  letter-spacing: var(--tracking-type-title);
+  color: var(--text);
+}
+
+.uc-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
