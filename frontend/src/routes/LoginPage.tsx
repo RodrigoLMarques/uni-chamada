@@ -82,8 +82,7 @@ export function LoginPage() {
             textWrap: 'balance',
           }}
         >
-          Registre a presença da turma com um QR na tela: cada aluno escaneia com o próprio celular
-          e digita o RA.
+          A chamada da sua turma em segundos.
         </p>
       </header>
 
