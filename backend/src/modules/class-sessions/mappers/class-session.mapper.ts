@@ -3,7 +3,7 @@ import { ClassSessionDTO } from '../models/class-session.dto';
 import { ClassSessionEntity, statusOf } from '../models/class-session.entity';
 
 export class ClassSessionMapper {
-  static modelToEntity(model: ClassSessionModel): ClassSessionEntity {
+  static modelToEntity(model: ClassSessionModel, presentCount = 0): ClassSessionEntity {
     return {
       id: model.id,
       courseId: model.courseId,
@@ -14,6 +14,7 @@ export class ClassSessionMapper {
       latitude: model.latitude === null ? null : Number(model.latitude),
       longitude: model.longitude === null ? null : Number(model.longitude),
       accuracyM: model.accuracyM,
+      presentCount,
     };
   }
 
@@ -29,6 +30,7 @@ export class ClassSessionMapper {
       longitude: entity.longitude ?? null,
       accuracyM: entity.accuracyM ?? null,
       status: statusOf(entity),
+      presentCount: entity.presentCount ?? 0,
     };
   }
 }

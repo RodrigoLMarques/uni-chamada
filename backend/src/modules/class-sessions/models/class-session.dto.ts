@@ -53,4 +53,5 @@ export type ClassSessionDTO = {
   longitude: number | null;
   accuracyM: number | null;
   status: ClassSessionStatus;
+  presentCount: number;
 };
