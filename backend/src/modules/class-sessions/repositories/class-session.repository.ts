@@ -18,7 +18,7 @@ export class ClassSessionRepository {
   async findById(courseId: string, id: string): Promise<ClassSessionEntity | null> {
     const session = await this.prisma.classSession.findFirst({ where: { id, courseId } });
     if (!session) return null;
-    return ClassSessionMapper.modelToEntity(session);
+    return ClassSessionMapper.modelToEntity(session, await this.countPresencesOf(session.id));
   }
 
   async findByStartsAt(courseId: string, startsAt: Date): Promise<ClassSessionEntity | null> {
@@ -56,18 +56,39 @@ export class ClassSessionRepository {
       this.prisma.classSession.count({ where }),
     ]);
 
+    const presentCounts = await this.countPresences(items.map((item) => item.id));
+
     return {
-      data: items.map((item) => ClassSessionMapper.modelToEntity(item)),
+      data: items.map((item) =>
+        ClassSessionMapper.modelToEntity(item, presentCounts.get(item.id) ?? 0),
+      ),
       pagination: makePagination(filter.page, filter.itemsPerPage, totalItems),
     };
   }
 
   async update(id: string, data: Prisma.ClassSessionUpdateInput): Promise<ClassSessionEntity> {
     const updated = await this.prisma.classSession.update({ where: { id }, data });
-    return ClassSessionMapper.modelToEntity(updated);
+    return ClassSessionMapper.modelToEntity(updated, await this.countPresencesOf(updated.id));
   }
 
   async remove(id: string): Promise<void> {
     await this.prisma.classSession.delete({ where: { id } });
+  }
+
+  private countPresencesOf(sessionId: string): Promise<number> {
+    return this.prisma.attendance.count({ where: { classSessionId: sessionId } });
+  }
+
+  /** Uma consulta agregada para a página inteira, nunca uma por chamada. */
+  private async countPresences(sessionIds: string[]): Promise<Map<string, number>> {
+    if (sessionIds.length === 0) return new Map();
+
+    const rows = await this.prisma.attendance.groupBy({
+      by: ['classSessionId'],
+      where: { classSessionId: { in: sessionIds } },
+      _count: { _all: true },
+    });
+
+    return new Map(rows.map((row) => [row.classSessionId, row._count._all]));
   }
 }

@@ -51,4 +51,7 @@ export type CourseDTO = {
   term: string;
   period: CoursePeriod;
   institution: Institution;
+  enrolledCount: number;
+  lastSessionAt: string | null;
+  openSessionId: string | null;
 };

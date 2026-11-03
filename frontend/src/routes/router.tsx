@@ -2,9 +2,12 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import { RequireAuth } from '@/auth/RequireAuth'
 import { AppShell } from '@/layout/AppShell'
 import { AccountPage } from './AccountPage'
+import { CoursePage } from './CoursePage'
+import { CoursesPage } from './CoursesPage'
 import { LoginPage } from './LoginPage'
 import { NotFoundPage } from './NotFoundPage'
 import { PlaceholderPage } from './PlaceholderPage'
+import { RosterPage } from './RosterPage'
 
 export const router = createBrowserRouter([
   // Rotas públicas: o aluno nunca autentica, e o login não pode exigir sessão.
@@ -19,15 +22,9 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <Navigate to="/turmas" replace /> },
-          { path: '/turmas', element: <PlaceholderPage title="Turmas" task="task 11" /> },
-          {
-            path: '/turmas/:courseId',
-            element: <PlaceholderPage title="Turma" task="task 11" />,
-          },
-          {
-            path: '/turmas/:courseId/alunos',
-            element: <PlaceholderPage title="Alunos da turma" task="task 11" />,
-          },
+          { path: '/turmas', element: <CoursesPage /> },
+          { path: '/turmas/:courseId', element: <CoursePage /> },
+          { path: '/turmas/:courseId/alunos', element: <RosterPage /> },
           {
             path: '/turmas/:courseId/relatorio',
             element: <PlaceholderPage title="Relatório da turma" task="task 14" />,

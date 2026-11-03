@@ -1,13 +1,21 @@
 import { useId, useState } from 'react'
-import { Link, NavLink } from 'react-router'
+import { Link, NavLink, useParams } from 'react-router'
 import { useAuth } from '@/auth/useAuth'
 import { BrandMark } from '@/brand/BrandMark'
+import { useCourses } from '@/courses/useCourses'
 import { initialsFrom } from '@/lib/initials'
-import { PLACEHOLDER_COURSES } from './placeholder-courses'
 import { ProfileMenu } from './ProfileMenu'
+
+const COURSE_SECTIONS = [
+  { to: '', label: 'Chamadas', end: true },
+  { to: '/relatorio', label: 'Relatório', end: false },
+  { to: '/alunos', label: 'Alunos', end: false },
+]
 
 export function SideNav() {
   const { teacher, signOut } = useAuth()
+  const { courseId } = useParams()
+  const { data: courses, isPending } = useCourses()
   const [menuOpen, setMenuOpen] = useState(false)
   const sectionLabelId = useId()
 
@@ -30,22 +38,59 @@ export function SideNav() {
       <p className="uc-sidenav-section-label" id={sectionLabelId}>
         Ativas
       </p>
-      <ul className="uc-sidenav-list" aria-labelledby={sectionLabelId}>
-        {PLACEHOLDER_COURSES.map((course) => (
-          <li key={course.slug}>
-            <NavLink className="uc-sidenav-item" to={`/turmas/${course.slug}`}>
-              <span className="uc-icon uc-i-chevron-right" aria-hidden="true" />
-              <span className="uc-sidenav-course-name">{course.name}</span>
-              {course.hasOpenSession ? (
-                <>
-                  <span className="uc-stat-dot uc-stat-dot-success" aria-hidden="true" />
-                  <span className="uc-visually-hidden">Chamada aberta</span>
-                </>
-              ) : null}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
+
+      {isPending ? (
+        <ul className="uc-sidenav-list" aria-busy="true">
+          {[0, 1, 2].map((row) => (
+            <li key={row} className="uc-sidenav-skeleton-row">
+              <span className="uc-skeleton uc-skeleton-text" style={{ width: '70%' }} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="uc-sidenav-list" aria-labelledby={sectionLabelId}>
+          {courses?.map((course) => {
+            const active = course.id === courseId
+            return (
+              <li key={course.id}>
+                <NavLink
+                  className="uc-sidenav-item"
+                  to={`/turmas/${course.id}`}
+                  style={active ? { color: 'var(--text)', fontWeight: 600 } : undefined}
+                >
+                  <span
+                    className={`uc-icon ${active ? 'uc-i-chevron-down' : 'uc-i-chevron-right'}`}
+                    aria-hidden="true"
+                  />
+                  <span className="uc-sidenav-course-name">{course.name}</span>
+                  {course.openSessionId ? (
+                    <>
+                      <span className="uc-stat-dot uc-stat-dot-success" aria-hidden="true" />
+                      <span className="uc-visually-hidden">Chamada aberta</span>
+                    </>
+                  ) : null}
+                </NavLink>
+
+                {active ? (
+                  <ul className="uc-sidenav-list uc-sidenav-sections" aria-label={`Seções de ${course.name}`}>
+                    {COURSE_SECTIONS.map((section) => (
+                      <li key={section.label}>
+                        <NavLink
+                          className="uc-sidenav-item"
+                          to={`/turmas/${course.id}${section.to}`}
+                          end={section.end}
+                        >
+                          {section.label}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </li>
+            )
+          })}
+        </ul>
+      )}
 
       <div className="uc-sidenav-foot">
         {teacher ? (
@@ -65,11 +110,7 @@ export function SideNav() {
         ) : null}
 
         {menuOpen && teacher ? (
-          <ProfileMenu
-            teacher={teacher}
-            onClose={() => setMenuOpen(false)}
-            onSignOut={signOut}
-          />
+          <ProfileMenu teacher={teacher} onClose={() => setMenuOpen(false)} onSignOut={signOut} />
         ) : null}
       </div>
     </nav>

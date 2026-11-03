@@ -12,6 +12,7 @@ export type ClassSessionEntity = {
   latitude?: number | null;
   longitude?: number | null;
   accuracyM?: number | null;
+  presentCount?: number;
 };
 
 export function statusOf(session: ClassSessionEntity): ClassSessionStatus {
