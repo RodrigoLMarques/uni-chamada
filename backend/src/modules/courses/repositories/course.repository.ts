@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../../generated/prisma/client';
+import { EnrollmentStatus } from '../../../../generated/prisma/enums';
 import { PaginatedItems, makePagination } from '../../../shared/pagination';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CourseMapper } from '../mappers/course.mapper';
 import { CourseFilter } from '../models/course.dto';
-import { CourseEntity } from '../models/course.entity';
+import {
+  CourseEntity,
+  CourseStats,
+  CourseWithStats,
+  EMPTY_COURSE_STATS,
+} from '../models/course.entity';
 
 @Injectable()
 export class CourseRepository {
@@ -30,6 +36,14 @@ export class CourseRepository {
     return CourseMapper.modelToEntity(course);
   }
 
+  async findSummaryByIdAndTeacher(id: string, teacherId: string): Promise<CourseWithStats | null> {
+    const course = await this.findByIdAndTeacher(id, teacherId);
+    if (!course) return null;
+
+    const stats = await this.loadStats([course.id]);
+    return { ...course, stats: stats.get(course.id) ?? { ...EMPTY_COURSE_STATS } };
+  }
+
   async findDuplicate(
     teacherId: string,
     code: string,
@@ -46,7 +60,7 @@ export class CourseRepository {
   async findAllByTeacher(
     teacherId: string,
     filter: CourseFilter,
-  ): Promise<PaginatedItems<CourseEntity>> {
+  ): Promise<PaginatedItems<CourseWithStats>> {
     const where: Prisma.CourseWhereInput = { teacherId };
 
     if (filter.query) {
@@ -69,8 +83,14 @@ export class CourseRepository {
       this.prisma.course.count({ where }),
     ]);
 
+    const courses = items.map((item) => CourseMapper.modelToEntity(item));
+    const stats = await this.loadStats(courses.map((course) => course.id));
+
     return {
-      data: items.map((item) => CourseMapper.modelToEntity(item)),
+      data: courses.map((course) => ({
+        ...course,
+        stats: stats.get(course.id) ?? { ...EMPTY_COURSE_STATS },
+      })),
       pagination: makePagination(filter.page, filter.itemsPerPage, totalItems),
     };
   }
@@ -94,5 +114,45 @@ export class CourseRepository {
       this.prisma.enrollment.deleteMany({ where: { courseId: id } }),
       this.prisma.course.delete({ where: { id } }),
     ]);
+  }
+
+  /** Três consultas agregadas para a lista inteira, nunca uma por turma. */
+  private async loadStats(courseIds: string[]): Promise<Map<string, CourseStats>> {
+    const stats = new Map<string, CourseStats>(
+      courseIds.map((id) => [id, { ...EMPTY_COURSE_STATS }]),
+    );
+    if (courseIds.length === 0) return stats;
+
+    const [enrolled, lastSessions, openSessions] = await Promise.all([
+      this.prisma.enrollment.groupBy({
+        by: ['courseId'],
+        where: { courseId: { in: courseIds }, status: EnrollmentStatus.ACTIVE },
+        _count: { _all: true },
+      }),
+      this.prisma.classSession.groupBy({
+        by: ['courseId'],
+        where: { courseId: { in: courseIds } },
+        _max: { startsAt: true },
+      }),
+      this.prisma.classSession.findMany({
+        where: { courseId: { in: courseIds }, openedAt: { not: null }, closedAt: null },
+        select: { id: true, courseId: true },
+      }),
+    ]);
+
+    for (const row of enrolled) {
+      const entry = stats.get(row.courseId);
+      if (entry) entry.enrolledCount = row._count._all;
+    }
+    for (const row of lastSessions) {
+      const entry = stats.get(row.courseId);
+      if (entry) entry.lastSessionAt = row._max.startsAt;
+    }
+    for (const row of openSessions) {
+      const entry = stats.get(row.courseId);
+      if (entry) entry.openSessionId = row.id;
+    }
+
+    return stats;
   }
 }

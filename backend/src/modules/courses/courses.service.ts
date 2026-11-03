@@ -3,14 +3,19 @@ import { PaginatedItems } from '../../shared/pagination';
 import { CourseConflictException } from './exceptions/course-conflict.exception';
 import { CourseNotFoundException } from './exceptions/course-not-found.exception';
 import { CourseFilter, CreateCourseDTO, UpdateCourseDTO } from './models/course.dto';
-import { CourseEntity, Institution } from './models/course.entity';
+import {
+  CourseEntity,
+  CourseWithStats,
+  EMPTY_COURSE_STATS,
+  Institution,
+} from './models/course.entity';
 import { CourseRepository } from './repositories/course.repository';
 
 @Injectable()
 export class CoursesService {
   constructor(private readonly courseRepository: CourseRepository) {}
 
-  async create(teacherId: string, dto: CreateCourseDTO): Promise<CourseEntity> {
+  async create(teacherId: string, dto: CreateCourseDTO): Promise<CourseWithStats> {
     const duplicate = await this.courseRepository.findDuplicate(
       teacherId,
       dto.code,
@@ -19,7 +24,7 @@ export class CoursesService {
     );
     if (duplicate) throw new CourseConflictException();
 
-    return this.courseRepository.create({
+    const created = await this.courseRepository.create({
       teacherId,
       code: dto.code,
       name: dto.name,
@@ -27,20 +32,23 @@ export class CoursesService {
       period: dto.period,
       institution: dto.institution ?? Institution.OTHER,
     });
+
+    // Turma recém-criada não tem matrícula nem chamada: não vale uma consulta.
+    return { ...created, stats: { ...EMPTY_COURSE_STATS } };
   }
 
-  async findAll(teacherId: string, filter: CourseFilter): Promise<PaginatedItems<CourseEntity>> {
+  async findAll(teacherId: string, filter: CourseFilter): Promise<PaginatedItems<CourseWithStats>> {
     return this.courseRepository.findAllByTeacher(teacherId, filter);
   }
 
-  async findById(teacherId: string, id: string): Promise<CourseEntity> {
-    const course = await this.courseRepository.findByIdAndTeacher(id, teacherId);
+  async findById(teacherId: string, id: string): Promise<CourseWithStats> {
+    const course = await this.courseRepository.findSummaryByIdAndTeacher(id, teacherId);
     if (!course) throw new CourseNotFoundException(id);
     return course;
   }
 
-  async update(teacherId: string, id: string, dto: UpdateCourseDTO): Promise<CourseEntity> {
-    const course = await this.findById(teacherId, id);
+  async update(teacherId: string, id: string, dto: UpdateCourseDTO): Promise<CourseWithStats> {
+    const course = await this.requireCourse(teacherId, id);
 
     const code = dto.code ?? course.code;
     const term = dto.term ?? course.term;
@@ -51,11 +59,19 @@ export class CoursesService {
       if (duplicate && duplicate.id !== course.id) throw new CourseConflictException();
     }
 
-    return this.courseRepository.update(id, dto);
+    await this.courseRepository.update(id, dto);
+    return this.findById(teacherId, id);
   }
 
   async remove(teacherId: string, id: string): Promise<void> {
-    await this.findById(teacherId, id);
+    await this.requireCourse(teacherId, id);
     await this.courseRepository.remove(id);
+  }
+
+  /** Checagem de posse sem carregar as contagens, que update e remove não usam. */
+  private async requireCourse(teacherId: string, id: string): Promise<CourseEntity> {
+    const course = await this.courseRepository.findByIdAndTeacher(id, teacherId);
+    if (!course) throw new CourseNotFoundException(id);
+    return course;
   }
 }

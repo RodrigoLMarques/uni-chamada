@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CoursesService } from './courses.service';
 import { CourseConflictException } from './exceptions/course-conflict.exception';
 import { CourseNotFoundException } from './exceptions/course-not-found.exception';
-import { CourseEntity, CoursePeriod, Institution } from './models/course.entity';
+import { CourseEntity, CoursePeriod, CourseWithStats, Institution } from './models/course.entity';
 import { CourseRepository } from './repositories/course.repository';
 
 const teacherId = 'teacher1xxxxxxxxxxxxxxxx';
@@ -15,6 +15,15 @@ const existing: CourseEntity = {
   term: '2026.2',
   period: CoursePeriod.FULL_TIME,
   institution: Institution.OTHER,
+};
+
+const existingWithStats: CourseWithStats = {
+  ...existing,
+  stats: {
+    enrolledCount: 12,
+    lastSessionAt: new Date('2026-10-17T22:00:00.000Z'),
+    openSessionId: null,
+  },
 };
 
 describe('CoursesService', () => {
@@ -32,6 +41,7 @@ describe('CoursesService', () => {
               Promise.resolve({ ...course, id: 'course11xxxxxxxxxxxxxxxx' }),
             ),
             findByIdAndTeacher: jest.fn(),
+            findSummaryByIdAndTeacher: jest.fn(),
             findDuplicate: jest.fn(),
             findAllByTeacher: jest.fn(),
             update: jest.fn((id: string, data: Partial<CourseEntity>) =>
@@ -98,17 +108,27 @@ describe('CoursesService', () => {
 
   describe('findById', () => {
     it('throws 404 for a course owned by another teacher', async () => {
-      repository.findByIdAndTeacher.mockResolvedValue(null);
+      repository.findSummaryByIdAndTeacher.mockResolvedValue(null);
 
       await expect(service.findById('teacher99xxxxxxxxxxxxxxx', existing.id)).rejects.toThrow(
         CourseNotFoundException,
       );
+    });
+
+    it('carries the enrolment count and the open session', async () => {
+      repository.findSummaryByIdAndTeacher.mockResolvedValue(existingWithStats);
+
+      const course = await service.findById(teacherId, existing.id);
+
+      expect(course.stats.enrolledCount).toBe(12);
+      expect(course.stats.openSessionId).toBeNull();
     });
   });
 
   describe('update', () => {
     it('does not check duplicates when the key is unchanged', async () => {
       repository.findByIdAndTeacher.mockResolvedValue(existing);
+      repository.findSummaryByIdAndTeacher.mockResolvedValue(existingWithStats);
 
       await service.update(teacherId, existing.id, { name: 'Another Name' });
 
@@ -128,6 +148,7 @@ describe('CoursesService', () => {
 
     it('allows when the duplicate found is the course itself', async () => {
       repository.findByIdAndTeacher.mockResolvedValue(existing);
+      repository.findSummaryByIdAndTeacher.mockResolvedValue(existingWithStats);
       repository.findDuplicate.mockResolvedValue(existing);
 
       await expect(
