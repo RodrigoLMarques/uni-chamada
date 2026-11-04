@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { QrCode } from './QrCode'
 
 function viewBoxOf(token: string): string {
-  const { container } = render(<QrCode token={token} size={100} label="QR" />)
+  const { container } = render(<QrCode value={token} size={100} label="QR" />)
   return container.querySelector('svg')!.getAttribute('viewBox')!
 }
 
@@ -28,7 +28,7 @@ describe('QrCode', () => {
   })
 
   it('desenha o código como um path só', () => {
-    const { container } = render(<QrCode token="chamada" size={100} label="QR" />)
+    const { container } = render(<QrCode value="chamada" size={100} label="QR" />)
     const paths = container.querySelectorAll('path')
 
     expect(paths).toHaveLength(1)

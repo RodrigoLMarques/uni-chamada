@@ -41,3 +41,12 @@ export function updatePassword(
 export function updateProfile(api: ApiClient, body: { name?: string; email?: string }) {
   return api.request('/users/me', { method: 'PATCH', body, schema: teacherSchema })
 }
+
+export function signUp(api: ApiClient, body: { name: string; email: string; password: string }) {
+  return api.request('/users', {
+    method: 'POST',
+    body,
+    schema: teacherSchema,
+    anonymous: true,
+  })
+}

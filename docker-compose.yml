@@ -26,15 +26,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql://unichamada:unichamada@postgres:5432/unichamada
-      JWT_SECRET: dev-secret-do-not-use-in-production
-      JWT_EXPIRES_IN: 7d
-      QR_SECRET: dev-qr-secret-do-not-use-in-production
-      QR_WINDOW_SECONDS: 3
-      ATTENDANCE_RADIUS_M: 100
-      CORS_ORIGINS: http://localhost:5173
-      PORT: 3000
     ports:
       - "3000:3000"
     volumes:

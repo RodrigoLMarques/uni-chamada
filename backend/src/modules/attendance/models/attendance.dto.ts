@@ -86,6 +86,14 @@ export class BulkManualAttendanceDTO {
   ras: string[];
 }
 
+export type ScanContextDTO = {
+  ticket: string;
+  ticketExpiresAt: string;
+  course: { name: string; code: string; term: string; period: string };
+  teacherName: string;
+  openedAt: string;
+};
+
 export type ScanResponse = {
   status: 'RECORDED';
   studentName: string;

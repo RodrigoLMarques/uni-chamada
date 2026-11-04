@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useId, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useAuth } from '@/auth/useAuth'
 import { BrandMark } from '@/brand/BrandMark'
 import { ApiError, NetworkError } from '@/lib/api'
@@ -52,51 +52,17 @@ export function LoginPage() {
 
   return (
     <div className="uc-centered">
-      <header
-        className="uc-centered-panel"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 'var(--space-4)',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+      <header className="uc-auth-head uc-centered-panel">
+        <div className="uc-auth-brand">
           <BrandMark size={40} />
-          <span
-            style={{
-              font: 'var(--text-type-title)',
-              fontWeight: 700,
-              letterSpacing: 'var(--tracking-type-title)',
-            }}
-          >
-            UniChamada
-          </span>
+          <span className="uc-auth-brand-name">UniChamada</span>
         </div>
-        <p
-          style={{
-            margin: 0,
-            font: 'var(--text-type-body)',
-            color: 'var(--text-muted)',
-            textWrap: 'balance',
-          }}
-        >
-          A chamada da sua turma em segundos.
-        </p>
+        <p className="uc-auth-tagline">A chamada da sua turma em segundos.</p>
       </header>
 
       <main className="uc-card uc-card-body uc-centered-panel">
         <form className="uc-form-stack" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <h1
-            style={{
-              margin: '0 0 var(--space-2)',
-              font: 'var(--text-type-heading)',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Entrar
-          </h1>
+          <h1 className="uc-auth-title">Entrar</h1>
 
           {failure ? (
             <p className="uc-banner uc-banner-danger" id={failureId} role="alert">
@@ -149,9 +115,8 @@ export function LoginPage() {
           </div>
 
           <button
-            className="uc-btn uc-btn-primary uc-btn-block"
+            className="uc-btn uc-btn-primary uc-btn-block uc-auth-submit"
             type="submit"
-            style={{ marginTop: 'var(--space-2)' }}
             disabled={isSubmitting}
             aria-busy={isSubmitting}
           >
@@ -160,6 +125,13 @@ export function LoginPage() {
           </button>
         </form>
       </main>
+
+      <p className="uc-auth-switch">
+        <span>Ainda não tem conta?</span>
+        <Link className="uc-link" to="/criar-conta">
+          Criar conta
+        </Link>
+      </p>
     </div>
   )
 }
