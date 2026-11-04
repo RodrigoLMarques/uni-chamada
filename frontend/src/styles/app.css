@@ -463,3 +463,176 @@ body {
   font-variant-numeric: tabular-nums;
   color: var(--text-subtle);
 }
+
+/* ───────────── Chamada ao vivo ───────────── */
+
+.uc-session-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6) var(--space-8);
+}
+
+.uc-session-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.uc-session-openedat {
+  font: var(--text-type-body-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-subtle);
+}
+
+.uc-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.uc-stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: var(--space-4);
+}
+
+.uc-session-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.uc-session-toolbar .uc-tabs {
+  border-bottom: 0;
+}
+
+.uc-session-search {
+  width: 280px;
+  max-width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+/* ───────────── Projeção ─────────────
+   Ocupa a janela inteira em vez dos 1920x1080 do artboard: a tela cheia real
+   pode ter qualquer proporção. As medidas escalam com a altura para o QR
+   continuar ocupando a coluna da esquerda em qualquer projetor. */
+
+.uc-projection-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  box-sizing: border-box;
+  display: grid;
+  /* Colunas do tamanho do conteúdo e o par centrado na tela: com 1fr à direita
+     o QR ficava encostado na borda esquerda e sobrava um vazio enorme. */
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(var(--space-12), 6vh, var(--space-24));
+  padding: clamp(var(--space-8), 6vh, var(--space-16))
+    clamp(var(--space-8), 8vh, var(--space-24));
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+
+.uc-projection-qr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* O QR segue a altura da tela, nunca um px fixo. */
+.uc-projection-qr .uc-qr svg {
+  width: min(68vh, 42vw) !important;
+  height: min(68vh, 42vw) !important;
+}
+
+.uc-projection-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(var(--space-8), 5vh, var(--space-16));
+  min-width: 0;
+  /* Teto para a instrução quebrar em duas linhas em vez de empurrar o QR. */
+  max-width: min(38ch, 34vw);
+}
+
+.uc-projection-course {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+  font: var(--text-type-projection-sm);
+  color: var(--text-muted);
+}
+
+.uc-projection-instruction {
+  margin: 0;
+  font: var(--text-type-display);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+.uc-projection-count {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.uc-projection-count-value {
+  font: var(--text-type-projection);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.uc-projection-count-label {
+  font: var(--text-type-projection-sm);
+  color: var(--text-muted);
+}
+
+.uc-projection-controls {
+  position: absolute;
+  top: clamp(var(--space-8), 6vh, var(--space-16));
+  right: clamp(var(--space-8), 8vh, var(--space-24));
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-8);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.uc-projection-hint {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 500;
+  color: var(--slate-500);
+}
+
+.uc-projection-hint kbd {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Abaixo de um projetor, a coluna do QR some: a tela do professor não é a sala. */
+@media (max-height: 520px), (max-width: 900px) {
+  .uc-projection-screen {
+    grid-template-columns: minmax(0, auto);
+    justify-items: center;
+    text-align: center;
+  }
+  .uc-projection-hint {
+    display: none;
+  }
+}

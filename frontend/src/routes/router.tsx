@@ -7,7 +7,9 @@ import { CoursesPage } from './CoursesPage'
 import { LoginPage } from './LoginPage'
 import { NotFoundPage } from './NotFoundPage'
 import { PlaceholderPage } from './PlaceholderPage'
+import { NewSessionPage } from './NewSessionPage'
 import { RosterPage } from './RosterPage'
+import { SessionPage } from './SessionPage'
 
 export const router = createBrowserRouter([
   // Rotas públicas: o aluno nunca autentica, e o login não pode exigir sessão.
@@ -29,10 +31,8 @@ export const router = createBrowserRouter([
             path: '/turmas/:courseId/relatorio',
             element: <PlaceholderPage title="Relatório da turma" task="task 14" />,
           },
-          {
-            path: '/turmas/:courseId/chamadas/:sessionId',
-            element: <PlaceholderPage title="Chamada" task="task 12" />,
-          },
+          { path: '/turmas/:courseId/chamadas/nova', element: <NewSessionPage /> },
+          { path: '/turmas/:courseId/chamadas/:sessionId', element: <SessionPage /> },
           { path: '/conta', element: <AccountPage /> },
         ],
       },
