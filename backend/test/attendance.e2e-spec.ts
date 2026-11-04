@@ -261,7 +261,9 @@ describe('Attendance (e2e)', () => {
 
     const body = created.body as AttendanceDTO;
     expect(body.method).toBe('MANUAL');
-    expect(body.flags.noLocation).toBe(true);
+    // Lançamento manual é do professor: nenhum dos três avisos se aplica, porque
+    // não há celular nem permissão de localização em jogo.
+    expect(body.flags).toEqual({ noLocation: false, farFromTeacher: false, sharedDevice: false });
     expect(body.distanceM).toBeNull();
 
     await request(app.getHttpServer())

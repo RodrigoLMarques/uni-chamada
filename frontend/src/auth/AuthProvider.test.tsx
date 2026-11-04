@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AUTH_STORAGE_KEY } from './auth-context'
 
-const TEACHER = { id: 'u1', name: 'Marina Delfino', email: 'marina.delfino@unifesp.br' }
+const TEACHER = { id: 'u1', name: 'Test Teacher', email: 'teacher@example.test' }
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -69,7 +69,7 @@ describe('AuthProvider', () => {
     await renderWithToken('token-valido')
 
     expect(await screen.findByTestId('status')).toHaveTextContent('authenticated')
-    expect(screen.getByTestId('teacher')).toHaveTextContent('Marina Delfino')
+    expect(screen.getByTestId('teacher')).toHaveTextContent('Test Teacher')
   })
 
   it('encerra a sessão e descarta o token quando o /auth/me devolve 401', async () => {

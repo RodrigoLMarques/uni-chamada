@@ -4,7 +4,7 @@ import {
 } from '../../../../generated/prisma/client';
 import { distanceInMeters } from '../../../shared/geo';
 import { AttendanceDTO, RollEntryDTO } from '../models/attendance.dto';
-import { AttendanceEntity, AttendanceFlags } from '../models/attendance.entity';
+import { AttendanceEntity, AttendanceFlags, AttendanceMethod } from '../models/attendance.entity';
 
 type SessionReference = {
   latitude?: number | null;
@@ -93,7 +93,11 @@ export class AttendanceMapper {
     const distanceM = AttendanceMapper.distanceFrom(entity, session);
 
     const flags: AttendanceFlags = {
-      noLocation: entity.latitude == null || entity.longitude == null,
+      // Lançamento manual é do professor: não existe celular nem permissão de
+      // localização envolvidos, então o aviso não se aplica.
+      noLocation:
+        entity.method === AttendanceMethod.QR &&
+        (entity.latitude == null || entity.longitude == null),
       farFromTeacher: distanceM !== null && distanceM > options.radiusM,
       sharedDevice:
         entity.deviceId !== null && entity.deviceId !== undefined
