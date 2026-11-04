@@ -37,6 +37,9 @@ export const classSessionSchema = z.object({
   openedAt: z.string().nullable(),
   closedAt: z.string().nullable(),
   confirmedAt: z.string().nullable(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  accuracyM: z.number().nullable(),
   status: z.enum(SESSION_STATUSES),
   presentCount: z.number(),
 })
@@ -60,4 +63,50 @@ export function useSessions(courseId: string | undefined) {
     enabled: Boolean(courseId),
     select: (result) => result.data,
   })
+}
+
+export function getSession(courseId: string, sessionId: string) {
+  return api.request(`/courses/${courseId}/sessions/${sessionId}`, { schema: classSessionSchema })
+}
+
+export function createSession(courseId: string, startsAt: string) {
+  return api.request(`/courses/${courseId}/sessions`, {
+    method: 'POST',
+    body: { startsAt },
+    schema: classSessionSchema,
+  })
+}
+
+/** A coordenada enviada aqui é a REFERÊNCIA contra a qual a distância de cada
+ *  aluno é medida. Sem ela o aviso farFromTeacher nunca dispara nesta chamada. */
+export function openSession(
+  courseId: string,
+  sessionId: string,
+  position?: { latitude: number; longitude: number; accuracyM?: number },
+) {
+  return api.request(`/courses/${courseId}/sessions/${sessionId}/open`, {
+    method: 'POST',
+    body: position ?? {},
+    schema: classSessionSchema,
+  })
+}
+
+export function closeSession(courseId: string, sessionId: string) {
+  return api.request(`/courses/${courseId}/sessions/${sessionId}/close`, {
+    method: 'POST',
+    schema: classSessionSchema,
+  })
+}
+
+export function useSession(courseId: string | undefined, sessionId: string | undefined) {
+  return useQuery({
+    queryKey: ['session', courseId ?? '', sessionId ?? ''],
+    queryFn: () => getSession(courseId!, sessionId!),
+    enabled: Boolean(courseId && sessionId),
+  })
+}
+
+/** Desconsiderar a chamada: ela some com as presenças registradas nela. */
+export function deleteSession(courseId: string, sessionId: string) {
+  return api.request(`/courses/${courseId}/sessions/${sessionId}`, { method: 'DELETE' })
 }
