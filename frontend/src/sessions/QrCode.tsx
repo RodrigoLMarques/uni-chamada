@@ -24,11 +24,11 @@ function pathFor(modules: Modules): string {
   return parts.join('')
 }
 
-export function QrCode({ token, size, label }: { token: string; size: number; label: string }) {
+export function QrCode({ value, size, label }: { value: string; size: number; label: string }) {
   const { path, span } = useMemo(() => {
-    const qr = QRCode.create(token, { errorCorrectionLevel: 'M' })
+    const qr = QRCode.create(value, { errorCorrectionLevel: 'M' })
     return { path: pathFor(qr.modules), span: qr.modules.size + QUIET_ZONE * 2 }
-  }, [token])
+  }, [value])
 
   return (
     <svg

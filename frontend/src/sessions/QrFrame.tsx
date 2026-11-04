@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { QrToken } from './live.api'
 import { QrCode } from './QrCode'
+import { scanUrlFor } from './scan-url'
 
 function secondsLeft(expiresAt: string): number {
   return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
@@ -37,7 +38,7 @@ export function QrFrame({
     >
       {/* O path é substituído, nunca o elemento: trocar o <svg> inteiro pisca na
           projeção, e a regra do sistema é zero movimento aqui. */}
-      <QrCode token={qr.token} size={size} label="QR code da chamada" />
+      <QrCode value={scanUrlFor(qr.token)} size={size} label="QR code da chamada" />
       <figcaption className="uc-qr-caption">
         <span className="uc-qr-timer" aria-hidden="true">
           <span className="uc-qr-steps">
