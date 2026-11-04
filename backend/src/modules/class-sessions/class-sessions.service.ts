@@ -112,11 +112,7 @@ export class ClassSessionsService {
   }
 
   async remove(teacherId: string, courseId: string, id: string): Promise<void> {
-    const session = await this.findById(teacherId, courseId, id);
-
-    const status = statusOf(session);
-    if (status !== 'SCHEDULED') throw new ClassSessionStateException('delete', status);
-
+    await this.findById(teacherId, courseId, id);
     await this.classSessionRepository.remove(id);
   }
 }

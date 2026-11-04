@@ -261,7 +261,7 @@ describe('Attendance (e2e)', () => {
 
     const body = created.body as AttendanceDTO;
     expect(body.method).toBe('MANUAL');
-    expect(body.flags.noLocation).toBe(true);
+    expect(body.flags).toEqual({ noLocation: false, farFromTeacher: false, sharedDevice: false });
     expect(body.distanceM).toBeNull();
 
     await request(app.getHttpServer())

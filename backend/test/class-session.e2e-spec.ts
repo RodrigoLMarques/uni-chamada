@@ -182,11 +182,30 @@ describe('ClassSessions (e2e)', () => {
       .expect(409);
   });
 
-  it('DELETE an open session returns 409', async () => {
-    await request(app.getHttpServer())
-      .delete(`/courses/${courseId}/sessions/${sessionId}`)
+  it('DELETE removes an open session so the teacher can disregard it', async () => {
+    const created = await request(app.getHttpServer())
+      .post(`/courses/${courseId}/sessions`)
       .set('Authorization', `Bearer ${token}`)
-      .expect(409);
+      .send({ startsAt: '2027-02-10T13:00:00.000Z' })
+      .expect(201);
+
+    const disposable = (created.body as ClassSessionDTO).id;
+
+    await request(app.getHttpServer())
+      .post(`/courses/${courseId}/sessions/${disposable}/open`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({})
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`/courses/${courseId}/sessions/${disposable}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${disposable}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(404);
   });
 
   it('GET sessions filters by status', async () => {

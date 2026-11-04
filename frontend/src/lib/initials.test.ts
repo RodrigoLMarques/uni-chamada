@@ -3,22 +3,25 @@ import { initialsFrom } from './initials'
 
 describe('initialsFrom', () => {
   it('usa primeiro e último nome', () => {
-    expect(initialsFrom('Marina Delfino')).toBe('MD')
-    expect(initialsFrom('Ana Beatriz Correia')).toBe('AC')
+    expect(initialsFrom('Test Student')).toBe('TS')
+  })
+
+  it('ignora o nome do meio', () => {
+    expect(initialsFrom('Test Middle Student')).toBe('TS')
   })
 
   it('ignora as partículas', () => {
-    expect(initialsFrom('João Pedro da Valença')).toBe('JV')
-    expect(initialsFrom('Carla Mendes do Amaral')).toBe('CA')
-    expect(initialsFrom('Maria das Dores')).toBe('MD')
+    expect(initialsFrom('Test da Student')).toBe('TS')
+    expect(initialsFrom('Test dos Student')).toBe('TS')
+    expect(initialsFrom('Test e Student')).toBe('TS')
   })
 
   it('devolve uma letra para nome único', () => {
-    expect(initialsFrom('Marina')).toBe('M')
+    expect(initialsFrom('Student')).toBe('S')
   })
 
   it('tolera espaços extras e string vazia', () => {
-    expect(initialsFrom('  Bruno   Tavares  ')).toBe('BT')
+    expect(initialsFrom('  Test   Student  ')).toBe('TS')
     expect(initialsFrom('   ')).toBe('')
   })
 })

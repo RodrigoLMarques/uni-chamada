@@ -1,9 +1,4 @@
-/* UniChamada — tokens gerados a partir de src/styles/tokens.json.
-   Gerado por scripts/build-tokens.ts (npm run tokens). Não edite à mão:
-   troque o valor no tokens.json e rode o script de novo.
-
-   A projeção força data-theme="light" na própria raiz, por isso o bloco escuro
-   é escrito como :root[data-theme="dark"] e nunca atinge uma subárvore clara. */
+/* Gerado por scripts/build-tokens.ts a partir de tokens.json. Não edite à mão. */
 
 :root {
 
@@ -201,7 +196,7 @@
   }
 }
 
-:root[data-theme="dark"] {
+[data-theme="dark"] {
   --bg: var(--slate-950);
   --surface: var(--slate-900);
   --surface-muted: var(--slate-800);
@@ -228,4 +223,33 @@
   --shadow-lg: 0 4px 6px -1px #00000080, 0 16px 32px -4px #000000b3;
   --focus-ring: 0 0 0 2px #0f172a, 0 0 0 4px #60a5fa;
   color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: var(--slate-50);
+  --surface: var(--white);
+  --surface-muted: var(--slate-100);
+  --border: var(--slate-200);
+  --border-strong: var(--slate-500);
+  --text: var(--slate-900);
+  --text-muted: var(--slate-600);
+  --text-subtle: var(--slate-500);
+  --accent: var(--blue-600);
+  --accent-hover: var(--blue-700);
+  --accent-fg: var(--white);
+  --accent-soft: var(--blue-50);
+  --success-soft: var(--green-50);
+  --success-solid: var(--green-700);
+  --success-fg: var(--white);
+  --warning-soft: var(--amber-50);
+  --warning-solid: var(--amber-700);
+  --warning-fg: var(--white);
+  --danger-soft: var(--red-50);
+  --danger-solid: var(--red-700);
+  --danger-fg: var(--white);
+  --overlay: #0f172a80;
+  --shadow-sm: 0 1px 2px #0f172a0f, 0 1px 3px #0f172a14;
+  --shadow-lg: 0 4px 6px -1px #0f172a14, 0 12px 24px -4px #0f172a29;
+  --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+  color-scheme: light;
 }

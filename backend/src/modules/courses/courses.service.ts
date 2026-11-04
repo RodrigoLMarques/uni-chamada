@@ -33,7 +33,6 @@ export class CoursesService {
       institution: dto.institution ?? Institution.OTHER,
     });
 
-    // Turma recém-criada não tem matrícula nem chamada: não vale uma consulta.
     return { ...created, stats: { ...EMPTY_COURSE_STATS } };
   }
 
@@ -68,7 +67,6 @@ export class CoursesService {
     await this.courseRepository.remove(id);
   }
 
-  /** Checagem de posse sem carregar as contagens, que update e remove não usam. */
   private async requireCourse(teacherId: string, id: string): Promise<CourseEntity> {
     const course = await this.courseRepository.findByIdAndTeacher(id, teacherId);
     if (!course) throw new CourseNotFoundException(id);

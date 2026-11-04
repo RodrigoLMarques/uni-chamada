@@ -147,21 +147,32 @@ function darkBlocks(): string {
     );
 
     blocks.push(
-      [`:root[data-theme="${theme}"] {`, ...overrides, `  color-scheme: ${theme};`, '}'].join('\n'),
+      [`[data-theme="${theme}"] {`, ...overrides, `  color-scheme: ${theme};`, '}'].join('\n'),
+    )
+
+    const backToPrimary = overrides.map((line) => {
+      const name = line.slice(line.indexOf('--') + 2, line.indexOf(':', 2)).trim()
+      const token = tokenFamilies()
+        .flatMap(([, tokens]) => tokens)
+        .find((entry) => entry.name === name)
+      const value = token ? valueForTheme(token, primaryTheme) : undefined
+      return value === undefined ? null : declaration(name, value)
+    })
+
+    blocks.push(
+      [
+        `[data-theme="${primaryTheme}"] {`,
+        ...backToPrimary.filter((line): line is string => line !== null),
+        `  color-scheme: ${primaryTheme};`,
+        '}',
+      ].join('\n'),
     );
   }
 
   return blocks.join('\n\n');
 }
 
-const header = [
-  `/* ${source.name} — tokens gerados a partir de src/styles/tokens.json.`,
-  '   Gerado por scripts/build-tokens.ts (npm run tokens). Não edite à mão:',
-  '   troque o valor no tokens.json e rode o script de novo.',
-  '',
-  '   A projeção força data-theme="light" na própria raiz, por isso o bloco escuro',
-  '   é escrito como :root[data-theme="dark"] e nunca atinge uma subárvore clara. */',
-].join('\n');
+const header = `/* Gerado por scripts/build-tokens.ts a partir de tokens.json. Não edite à mão. */`;
 
 const css = [
   header,
