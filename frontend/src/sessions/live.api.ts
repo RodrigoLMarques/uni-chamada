@@ -52,7 +52,6 @@ export const liveSessionSchema = z.object({
 
 export type LiveSession = z.infer<typeof liveSessionSchema>
 
-/** As três coexistem no mesmo aluno. São avisos para o professor, nunca bloqueio. */
 export const attendanceFlagsSchema = z.object({
   noLocation: z.boolean(),
   farFromTeacher: z.boolean(),
@@ -89,8 +88,6 @@ export function getLive(courseId: string, sessionId: string) {
   })
 }
 
-/** A turma inteira numa página: o limite da API é 100 e o design system manda
- *  rolar em vez de paginar durante a chamada. */
 export const ROLL_PAGE_SIZE = 100
 
 export function getRoll(courseId: string, sessionId: string) {

@@ -40,8 +40,6 @@ function matches(entry: RollEntry, tab: Tab): boolean {
   return true
 }
 
-/** Presentes primeiro, do registro mais recente para o mais antigo; ausentes
- *  depois, em ordem alfabética. */
 function byRecency(a: RollEntry, b: RollEntry): number {
   if (a.recordedAt && b.recordedAt) return b.recordedAt.localeCompare(a.recordedAt)
   if (a.recordedAt) return -1
@@ -66,8 +64,6 @@ export function SessionPage() {
   const [confirmingClose, setConfirmingClose] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
-  // A projeção fica na URL, não só em estado: recarregar no meio da aula
-  // devolve o professor à projeção em vez de ao painel.
   const [searchParams, setSearchParams] = useSearchParams()
   const projecting = searchParams.get('projecao') === '1'
 
@@ -111,8 +107,6 @@ export function SessionPage() {
       .sort(byRecency)
   }, [entries, tab, search])
 
-  // Fullscreen de verdade na projeção; sair por F11 ou pelo navegador também
-  // devolve ao painel.
   useEffect(() => {
     if (!projecting) return
 

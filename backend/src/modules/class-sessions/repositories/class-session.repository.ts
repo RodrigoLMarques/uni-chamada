@@ -82,7 +82,6 @@ export class ClassSessionRepository {
     return this.prisma.attendance.count({ where: { classSessionId: sessionId } });
   }
 
-  /** Uma consulta agregada para a página inteira, nunca uma por chamada. */
   private async countPresences(sessionIds: string[]): Promise<Map<string, number>> {
     if (sessionIds.length === 0) return new Map();
 

@@ -5,9 +5,6 @@ import { QrFrame } from './QrFrame'
 const CONTROLS_IDLE_MS = 3000
 const QR_SIZE_PX = 780
 
-/** Tela cheia do próprio painel, não página separada. Sempre clara, em qualquer
- *  tema do sistema: leitor de QR espera módulo escuro sobre fundo claro, e
- *  código invertido falha em parte dos aparelhos. */
 export function ProjectionView({
   courseName,
   courseLabel,

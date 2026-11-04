@@ -14,13 +14,6 @@ export const POSITION_MESSAGES: Record<Exclude<PositionResult['kind'], 'granted'
   unavailable: 'Este navegador não conseguiu obter a localização.',
 }
 
-/** Nunca rejeita: recusar a localização não pode impedir a ação que depende dela.
- *  Quem chama decide o que fazer com cada desfecho.
- *
- *  Vale lembrar que isto exige contexto seguro: funciona em https e em
- *  localhost, e falha quando o site é aberto por IP na rede local. Firefox e
- *  derivados ainda dependem de um serviço de rede para resolver a posição, e
- *  quando ele está desligado o pedido estoura o prazo em vez de ser negado. */
 export function requestPosition(timeoutMs = TIMEOUT_MS): Promise<PositionResult> {
   if (!('geolocation' in navigator) || !window.isSecureContext) {
     return Promise.resolve({ kind: 'unavailable' })

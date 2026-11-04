@@ -3,8 +3,6 @@ import { z } from 'zod'
 import { api } from '@/lib/api'
 import { paginatedSchema, searchParams } from '@/lib/pagination'
 
-/** SCHEDULED existe no enum da API mas não acontece no MVP: a chamada nasce
- *  aberta. Nenhuma tela trata esse estado. */
 export const SESSION_STATUSES = ['SCHEDULED', 'OPEN', 'CLOSED', 'CONFIRMED'] as const
 
 export type SessionStatus = (typeof SESSION_STATUSES)[number]
@@ -77,8 +75,6 @@ export function createSession(courseId: string, startsAt: string) {
   })
 }
 
-/** A coordenada enviada aqui é a REFERÊNCIA contra a qual a distância de cada
- *  aluno é medida. Sem ela o aviso farFromTeacher nunca dispara nesta chamada. */
 export function openSession(
   courseId: string,
   sessionId: string,
@@ -106,7 +102,6 @@ export function useSession(courseId: string | undefined, sessionId: string | und
   })
 }
 
-/** Desconsiderar a chamada: ela some com as presenças registradas nela. */
 export function deleteSession(courseId: string, sessionId: string) {
   return api.request(`/courses/${courseId}/sessions/${sessionId}`, { method: 'DELETE' })
 }

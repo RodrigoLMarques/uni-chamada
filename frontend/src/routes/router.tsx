@@ -12,7 +12,6 @@ import { RosterPage } from './RosterPage'
 import { SessionPage } from './SessionPage'
 
 export const router = createBrowserRouter([
-  // Rotas públicas: o aluno nunca autentica, e o login não pode exigir sessão.
   { path: '/entrar', element: <LoginPage /> },
   { path: '/scan', element: <PlaceholderPage title="Registrar presença" task="task 13" /> },
   { path: '/consulta', element: <PlaceholderPage title="Consultar presença" task="task 13" /> },

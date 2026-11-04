@@ -4,7 +4,6 @@ import { getLive, getRoll } from './live.api'
 import { closeSession, deleteSession, sessionKeys } from './sessions.api'
 
 const POLL_MS = 3000
-/** Folga para o token novo já estar valendo quando a resposta chega. */
 const REALIGN_CUSHION_MS = 150
 
 export const liveKeys = {
@@ -12,17 +11,10 @@ export const liveKeys = {
   roll: (courseId: string, sessionId: string) => ['roll', courseId, sessionId] as const,
 }
 
-/** Enquanto a chamada está aberta, as duas consultas recarregam sozinhas. O
- *  TanStack Query mantém o conteúdo antigo na tela até o novo chegar, que é a
- *  regra do design system: sem skeleton, sem salto de rolagem, sem piscar.
- *  Em segundo plano o polling para sozinho (refetchIntervalInBackground é falso
- *  por padrão) e retoma quando a aba volta. */
 export function useLiveSession(courseId: string, sessionId: string, open: boolean) {
   const live = useQuery({
     queryKey: liveKeys.live(courseId, sessionId),
     queryFn: () => getLive(courseId, sessionId),
-    // Realinha cada ciclo pelo expiresAt em vez de um intervalo solto, senão o
-    // QR exibido sai de fase com a janela que o servidor aceita.
     refetchInterval: (query) => {
       if (!open) return false
       const expiresAt = query.state.data?.qr?.expiresAt
@@ -30,9 +22,6 @@ export function useLiveSession(courseId: string, sessionId: string, open: boolea
       const remaining = new Date(expiresAt).getTime() - Date.now()
       return Math.min(POLL_MS, Math.max(400, remaining + REALIGN_CUSHION_MS))
     },
-    // O QR precisa continuar girando mesmo com a janela fora de foco: durante a
-    // projeção o professor pode clicar noutro monitor, e um código congelado
-    // para de ser aceito pelo servidor.
     refetchIntervalInBackground: true,
   })
 

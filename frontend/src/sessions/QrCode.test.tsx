@@ -8,8 +8,6 @@ function viewBoxOf(token: string): string {
 }
 
 describe('QrCode', () => {
-  /** O token real tem ~48 caracteres e cai na versão 4 do QR, 33 módulos. Um
-   *  viewBox fixo cortaria a zona de silêncio e o código pararia de ser lido. */
   it('dimensiona o viewBox pelo código gerado, não por um número fixo', () => {
     const curto = viewBoxOf('abc')
     const real = viewBoxOf('zry1vszhgazbwtl7ab8djtfc.1a2b3c.9f8e7d6c5b4a3210')
@@ -25,7 +23,6 @@ describe('QrCode', () => {
 
     expect(x).toBe(-4)
     expect(y).toBe(-4)
-    // 33 módulos mais 4 de folga de cada lado.
     expect(width).toBe(33 + 8)
     expect(height).toBe(width)
   })

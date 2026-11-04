@@ -15,7 +15,6 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
-      // Repetir um 4xx só gasta requisição: o servidor já decidiu.
       retry: (failureCount, error) =>
         error instanceof ApiError && error.status < 500 ? false : failureCount < 2,
     },

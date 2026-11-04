@@ -29,8 +29,6 @@ export function NewSessionPage() {
     setOpening(true)
     setFailure(null)
 
-    // A coordenada é pedida ANTES de abrir: ela é a referência contra a qual a
-    // distância de cada aluno é medida, e só vale se for capturada na abertura.
     const result = await requestPosition()
 
     try {
@@ -46,8 +44,6 @@ export function NewSessionPage() {
       void queryClient.invalidateQueries({ queryKey: sessionKeys.byCourse(courseId) })
 
       if (result.kind !== 'granted') {
-        // Dizer QUAL desfecho aconteceu: bloqueado, demorado e indisponível têm
-        // causas e soluções diferentes.
         notify({
           tone: 'warning',
           title: 'Chamada aberta sem localização',

@@ -1,8 +1,6 @@
 import QRCode from 'qrcode'
 import { useMemo } from 'react'
 
-/** Zona de silêncio: 4 módulos de cada lado, exigidos pela especificação do QR.
- *  Cortar isso é o jeito mais rápido de o código parar de ser lido. */
 const QUIET_ZONE = 4
 
 type Modules = ReturnType<typeof QRCode.create>['modules']
@@ -27,8 +25,6 @@ function pathFor(modules: Modules): string {
 }
 
 export function QrCode({ token, size, label }: { token: string; size: number; label: string }) {
-  // O viewBox sai do código gerado, nunca de um número fixo: o comprimento do
-  // token muda a versão do QR e com ela a contagem de módulos.
   const { path, span } = useMemo(() => {
     const qr = QRCode.create(token, { errorCorrectionLevel: 'M' })
     return { path: pathFor(qr.modules), span: qr.modules.size + QUIET_ZONE * 2 }

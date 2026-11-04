@@ -1,8 +1,6 @@
 import { formatDistance } from '@/lib/format'
 import type { AttendanceFlags as Flags } from './live.api'
 
-/** Ordem fixa do design system. São AVISOS: nada de vermelho, e as palavras
- *  "fraude", "suspeito" e "irregular" não entram em lugar nenhum. */
 function describe(flags: Flags, distanceM: number | null) {
   const entries: { key: string; className: string; icon: string; label: string; title: string }[] =
     []
@@ -65,7 +63,6 @@ export function AttendanceFlagList({
   return (
     <div className="uc-flags">
       {entries.map((entry) => (
-        // Botão, não span: é o que deixa o tooltip alcançável pelo teclado.
         <button
           key={entry.key}
           type="button"

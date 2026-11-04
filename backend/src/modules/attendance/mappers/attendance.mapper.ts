@@ -93,8 +93,6 @@ export class AttendanceMapper {
     const distanceM = AttendanceMapper.distanceFrom(entity, session);
 
     const flags: AttendanceFlags = {
-      // Lançamento manual é do professor: não existe celular nem permissão de
-      // localização envolvidos, então o aviso não se aplica.
       noLocation:
         entity.method === AttendanceMethod.QR &&
         (entity.latitude == null || entity.longitude == null),

@@ -6,9 +6,6 @@ function secondsLeft(expiresAt: string): number {
   return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
 }
 
-/** O tique só força o re-render; o valor sai do expiresAt durante o render, então
- *  trocar de QR não precisa de efeito para zerar nada. Quem decide a troca é o
- *  refetch alinhado ao expiresAt, não este contador. */
 function useTick(intervalMs: number): void {
   const [, setTick] = useState(0)
 

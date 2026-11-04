@@ -18,8 +18,6 @@ function Wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }
 
-/** token.ts lê o localStorage no carregamento do módulo, então cada cenário precisa
- *  de um módulo novo depois de semear o storage. */
 async function renderWithToken(token: string | null) {
   if (token) window.localStorage.setItem(AUTH_STORAGE_KEY, token)
   vi.resetModules()

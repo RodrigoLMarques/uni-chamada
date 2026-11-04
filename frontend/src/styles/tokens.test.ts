@@ -5,9 +5,6 @@ import { describe, expect, it } from 'vitest'
 const css = readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8')
 
 describe('tokens.css gerado', () => {
-  /** A projeção é uma subárvore clara dentro de uma raiz que pode estar escura.
-   *  Prefixar com :root prende o tema ao <html> e deixa texto claro sobre fundo
-   *  branco: projeção ilegível para quem usa o sistema no escuro. */
   it('declara os temas em seletor de atributo, sem prender ao :root', () => {
     expect(css).toMatch(/^\[data-theme="dark"\] \{/m)
     expect(css).toMatch(/^\[data-theme="light"\] \{/m)

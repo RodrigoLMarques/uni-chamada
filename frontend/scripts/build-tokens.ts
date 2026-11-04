@@ -146,14 +146,10 @@ function darkBlocks(): string {
       ].join('\n'),
     );
 
-    // Sem o prefixo :root de propósito. O tema precisa valer numa SUBÁRVORE:
-    // é assim que a projeção fica clara com o sistema operacional no escuro.
     blocks.push(
       [`[data-theme="${theme}"] {`, ...overrides, `  color-scheme: ${theme};`, '}'].join('\n'),
     )
 
-    // E o caminho de volta: uma subárvore clara dentro de uma raiz escura precisa
-    // redefinir os mesmos tokens, senão herda o texto claro sobre fundo claro.
     const backToPrimary = overrides.map((line) => {
       const name = line.slice(line.indexOf('--') + 2, line.indexOf(':', 2)).trim()
       const token = tokenFamilies()
@@ -176,15 +172,7 @@ function darkBlocks(): string {
   return blocks.join('\n\n');
 }
 
-const header = [
-  `/* ${source.name} — tokens gerados a partir de src/styles/tokens.json.`,
-  '   Gerado por scripts/build-tokens.ts (npm run tokens). Não edite à mão:',
-  '   troque o valor no tokens.json e rode o script de novo.',
-  '',
-  '   Os blocos de tema usam seletor de atributo sem prefixo de raiz, para o tema',
-  '   valer numa subárvore: é assim que a projeção fica clara com o sistema',
-  '   operacional no escuro. */',
-].join('\n');
+const header = `/* Gerado por scripts/build-tokens.ts a partir de tokens.json. Não edite à mão. */`;
 
 const css = [
   header,
