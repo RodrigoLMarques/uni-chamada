@@ -33,3 +33,10 @@ export function formatTimeWithSeconds(iso: string): string {
 
 /** Falta de dado é travessão, nunca zero nem vazio. */
 export const EMPTY = '—'
+
+/** Metros até 999, depois quilômetros com uma casa e vírgula. */
+export function formatDistance(distanceM: number | null): string | null {
+  if (distanceM === null) return null
+  if (distanceM < 1000) return `${Math.round(distanceM)} m`
+  return `${(distanceM / 1000).toFixed(1).replace('.', ',')} km`
+}
