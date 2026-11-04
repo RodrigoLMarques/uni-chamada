@@ -146,8 +146,30 @@ function darkBlocks(): string {
       ].join('\n'),
     );
 
+    // Sem o prefixo :root de propósito. O tema precisa valer numa SUBÁRVORE:
+    // é assim que a projeção fica clara com o sistema operacional no escuro.
     blocks.push(
-      [`:root[data-theme="${theme}"] {`, ...overrides, `  color-scheme: ${theme};`, '}'].join('\n'),
+      [`[data-theme="${theme}"] {`, ...overrides, `  color-scheme: ${theme};`, '}'].join('\n'),
+    )
+
+    // E o caminho de volta: uma subárvore clara dentro de uma raiz escura precisa
+    // redefinir os mesmos tokens, senão herda o texto claro sobre fundo claro.
+    const backToPrimary = overrides.map((line) => {
+      const name = line.slice(line.indexOf('--') + 2, line.indexOf(':', 2)).trim()
+      const token = tokenFamilies()
+        .flatMap(([, tokens]) => tokens)
+        .find((entry) => entry.name === name)
+      const value = token ? valueForTheme(token, primaryTheme) : undefined
+      return value === undefined ? null : declaration(name, value)
+    })
+
+    blocks.push(
+      [
+        `[data-theme="${primaryTheme}"] {`,
+        ...backToPrimary.filter((line): line is string => line !== null),
+        `  color-scheme: ${primaryTheme};`,
+        '}',
+      ].join('\n'),
     );
   }
 
@@ -159,8 +181,9 @@ const header = [
   '   Gerado por scripts/build-tokens.ts (npm run tokens). Não edite à mão:',
   '   troque o valor no tokens.json e rode o script de novo.',
   '',
-  '   A projeção força data-theme="light" na própria raiz, por isso o bloco escuro',
-  '   é escrito como :root[data-theme="dark"] e nunca atinge uma subárvore clara. */',
+  '   Os blocos de tema usam seletor de atributo sem prefixo de raiz, para o tema',
+  '   valer numa subárvore: é assim que a projeção fica clara com o sistema',
+  '   operacional no escuro. */',
 ].join('\n');
 
 const css = [
