@@ -16,6 +16,8 @@ import { CourseDTO } from '../src/modules/courses/models/course.dto';
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 import { PaginatedItems } from '../src/shared/pagination';
 
+const expectedWindowSeconds = Number(process.env.QR_WINDOW_SECONDS ?? 3);
+
 describe('Attendance report (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
@@ -135,7 +137,7 @@ describe('Attendance report (e2e)', () => {
 
       const body = response.body as LiveSessionDTO;
       expect(body.status).toBe('OPEN');
-      expect(body.qr?.windowSeconds).toBe(3);
+      expect(body.qr?.windowSeconds).toBe(expectedWindowSeconds);
       expect(body.summary).toEqual({ enrolled: 2, present: 0, absent: 2 });
       expect(body.lastRecordedAt).toBeNull();
       expect(body.recent).toEqual([]);

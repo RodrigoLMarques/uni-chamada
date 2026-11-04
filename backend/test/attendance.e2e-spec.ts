@@ -15,6 +15,8 @@ import { EnrollmentDTO } from '../src/modules/enrollments/models/enrollment.dto'
 import { PrismaService } from '../src/modules/prisma/prisma.service';
 import { PaginatedItems } from '../src/shared/pagination';
 
+const expectedWindowSeconds = Number(process.env.QR_WINDOW_SECONDS ?? 3);
+
 describe('Attendance (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
@@ -136,7 +138,7 @@ describe('Attendance (e2e)', () => {
       .expect(200);
 
     const body = response.body as QrTokenDTO;
-    expect(body.windowSeconds).toBe(3);
+    expect(body.windowSeconds).toBe(expectedWindowSeconds);
     expect(body.token.startsWith(`${sessionId}.`)).toBe(true);
     expect(new Date(body.expiresAt).getTime()).toBeGreaterThan(Date.now());
   });

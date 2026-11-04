@@ -10,11 +10,13 @@ import { PlaceholderPage } from './PlaceholderPage'
 import { LookupPage } from './LookupPage'
 import { NewSessionPage } from './NewSessionPage'
 import { ScanPage } from './ScanPage'
+import { SignUpPage } from './SignUpPage'
 import { RosterPage } from './RosterPage'
 import { SessionPage } from './SessionPage'
 
 export const router = createBrowserRouter([
   { path: '/entrar', element: <LoginPage /> },
+  { path: '/criar-conta', element: <SignUpPage /> },
   { path: '/scan', element: <ScanPage /> },
   { path: '/consulta', element: <LookupPage /> },
 
