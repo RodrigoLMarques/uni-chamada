@@ -229,11 +229,19 @@ describe('ClassSessionsService', () => {
       expect(repository.remove).toHaveBeenCalledWith(sessionId);
     });
 
-    it('refuses to delete a session that already ran', async () => {
+    it('deletes a session that already ran, so it can be disregarded', async () => {
       repository.findById.mockResolvedValue(closed);
 
+      await service.remove(teacherId, courseId, sessionId);
+
+      expect(repository.remove).toHaveBeenCalledWith(sessionId);
+    });
+
+    it('still refuses to delete a session of another teacher', async () => {
+      repository.findById.mockResolvedValue(null);
+
       await expect(service.remove(teacherId, courseId, sessionId)).rejects.toThrow(
-        ClassSessionStateException,
+        ClassSessionNotFoundException,
       );
       expect(repository.remove).not.toHaveBeenCalled();
     });

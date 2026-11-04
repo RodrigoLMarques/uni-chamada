@@ -111,12 +111,12 @@ export class ClassSessionsService {
     return this.classSessionRepository.update(id, { confirmedAt: new Date() });
   }
 
+  /** Desconsiderar uma chamada: some com ela e com as presenças registradas nela,
+   *  em qualquer estado. Confirmada inclusive, porque é justamente o caso em que
+   *  a aula não deveria ter entrado na frequência. Quem avisa do estrago é a
+   *  confirmação na interface. */
   async remove(teacherId: string, courseId: string, id: string): Promise<void> {
-    const session = await this.findById(teacherId, courseId, id);
-
-    const status = statusOf(session);
-    if (status !== 'SCHEDULED') throw new ClassSessionStateException('delete', status);
-
+    await this.findById(teacherId, courseId, id);
     await this.classSessionRepository.remove(id);
   }
 }

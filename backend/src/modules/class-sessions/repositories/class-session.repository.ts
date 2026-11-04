@@ -72,7 +72,10 @@ export class ClassSessionRepository {
   }
 
   async remove(id: string): Promise<void> {
-    await this.prisma.classSession.delete({ where: { id } });
+    await this.prisma.$transaction([
+      this.prisma.attendance.deleteMany({ where: { classSessionId: id } }),
+      this.prisma.classSession.delete({ where: { id } }),
+    ]);
   }
 
   private countPresencesOf(sessionId: string): Promise<number> {
