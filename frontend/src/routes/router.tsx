@@ -7,14 +7,16 @@ import { CoursesPage } from './CoursesPage'
 import { LoginPage } from './LoginPage'
 import { NotFoundPage } from './NotFoundPage'
 import { PlaceholderPage } from './PlaceholderPage'
+import { LookupPage } from './LookupPage'
 import { NewSessionPage } from './NewSessionPage'
+import { ScanPage } from './ScanPage'
 import { RosterPage } from './RosterPage'
 import { SessionPage } from './SessionPage'
 
 export const router = createBrowserRouter([
   { path: '/entrar', element: <LoginPage /> },
-  { path: '/scan', element: <PlaceholderPage title="Registrar presença" task="task 13" /> },
-  { path: '/consulta', element: <PlaceholderPage title="Consultar presença" task="task 13" /> },
+  { path: '/scan', element: <ScanPage /> },
+  { path: '/consulta', element: <LookupPage /> },
 
   {
     element: <RequireAuth />,
