@@ -141,6 +141,59 @@ describe('Attendance (e2e)', () => {
     expect(new Date(body.expiresAt).getTime()).toBeGreaterThan(Date.now());
   });
 
+  it('GET scan trades the rotating token for a ticket and the session context', async () => {
+    const qr = await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/qr`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const { token: qrToken } = qr.body as QrTokenDTO;
+
+    const response = await request(app.getHttpServer()).get(`/scan/${qrToken}`).expect(200);
+
+    const body = response.body as {
+      ticket: string;
+      ticketExpiresAt: string;
+      course: { name: string; code: string };
+      teacherName: string;
+      openedAt: string;
+    };
+
+    expect(body.ticket.startsWith('t.')).toBe(true);
+    expect(body.course.code).toBeDefined();
+    expect(body.teacherName).toBeDefined();
+    expect(body.openedAt).not.toBeNull();
+
+    const ttlMs = new Date(body.ticketExpiresAt).getTime() - Date.now();
+    expect(ttlMs).toBeGreaterThan(60_000);
+  });
+
+  it('GET scan refuses a token that was never signed here', async () => {
+    await request(app.getHttpServer()).get(`/scan/${sessionId}.zzz.deadbeefdeadbeef`).expect(401);
+  });
+
+  it('POST scan accepts the ticket, which is what lets the student type without rushing', async () => {
+    const qr = await request(app.getHttpServer())
+      .get(`/courses/${courseId}/sessions/${sessionId}/qr`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const context = await request(app.getHttpServer())
+      .get(`/scan/${(qr.body as QrTokenDTO).token}`)
+      .expect(200);
+
+    const { ticket } = context.body as { ticket: string };
+
+    await request(app.getHttpServer())
+      .post('/scan')
+      .send({ token: ticket, ra: raAbsent })
+      .expect(201);
+
+    await prisma.attendance.deleteMany({
+      where: { classSessionId: sessionId, student: { ra: raAbsent } },
+    });
+  });
+
   it('POST scan rejects a garbage token with 401', async () => {
     await request(app.getHttpServer())
       .post('/scan')

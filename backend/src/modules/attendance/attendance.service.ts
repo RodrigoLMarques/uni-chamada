@@ -10,6 +10,7 @@ import { InvalidQrTokenException } from './exceptions/invalid-qr-token.exception
 import { NotEnrolledException } from './exceptions/not-enrolled.exception';
 import { SessionNotOpenException } from './exceptions/session-not-open.exception';
 import { AttendanceMapper } from './mappers/attendance.mapper';
+import type { ScanContextDTO } from './models/attendance.dto';
 import {
   AttendanceFilter,
   BulkManualAttendanceDTO,
@@ -88,8 +89,34 @@ export class AttendanceService {
     return { token, windowSeconds, expiresAt: expiresAt.toISOString() };
   }
 
+  async resolveScanContext(token: string): Promise<ScanContextDTO> {
+    const classSessionId = this.qrTokenService.verifyAny(token);
+    if (!classSessionId) throw new InvalidQrTokenException();
+
+    const session = await this.attendanceRepository.findSessionContext(classSessionId);
+    if (!session) throw new InvalidQrTokenException();
+    if (session.openedAt === null || session.closedAt !== null) {
+      throw new SessionNotOpenException();
+    }
+
+    const { ticket, expiresAt } = this.qrTokenService.issueTicket(session.id);
+
+    return {
+      ticket,
+      ticketExpiresAt: expiresAt.toISOString(),
+      course: {
+        name: session.course.name,
+        code: session.course.code,
+        term: session.course.term,
+        period: session.course.period,
+      },
+      teacherName: session.course.teacher.name,
+      openedAt: session.openedAt.toISOString(),
+    };
+  }
+
   async scan(dto: ScanDTO, clientIp?: string | null): Promise<ScanResult> {
-    const classSessionId = this.qrTokenService.verify(dto.token);
+    const classSessionId = this.qrTokenService.verifyAny(dto.token);
     if (!classSessionId) throw new InvalidQrTokenException();
 
     const session = await this.attendanceRepository.findSessionForScan(classSessionId);

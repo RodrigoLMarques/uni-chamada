@@ -83,6 +83,28 @@ export class AttendanceRepository {
     });
   }
 
+  async findSessionContext(id: string) {
+    return this.prisma.classSession.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        startsAt: true,
+        openedAt: true,
+        closedAt: true,
+        confirmedAt: true,
+        course: {
+          select: {
+            name: true,
+            code: true,
+            term: true,
+            period: true,
+            teacher: { select: { name: true } },
+          },
+        },
+      },
+    });
+  }
+
   async findActiveStudentByRa(
     courseId: string,
     ra: string,
