@@ -9,7 +9,7 @@ function summary(overrides: Partial<StudentCourseSummary> = {}): StudentCourseSu
     confirmedSessions: 13,
     attendedSessions: 11,
     pendingSessions: 0,
-    attendanceRate: 85,
+    attendanceRate: 0.85,
     ...overrides,
   }
 }
@@ -23,7 +23,7 @@ describe('AttendanceMeter', () => {
   })
 
   it('arredonda para inteiro, sem casa decimal', () => {
-    render(<AttendanceMeter summary={summary({ attendanceRate: 84.6 })} />)
+    render(<AttendanceMeter summary={summary({ attendanceRate: 0.846 })} />)
 
     expect(screen.getByText('85%')).toBeInTheDocument()
   })
@@ -48,7 +48,7 @@ describe('AttendanceMeter', () => {
   })
 
   it('avisa quando está abaixo do mínimo', () => {
-    render(<AttendanceMeter summary={summary({ attendanceRate: 67 })} />)
+    render(<AttendanceMeter summary={summary({ attendanceRate: 0.67 })} />)
 
     expect(screen.getByText('Abaixo do mínimo de 75%')).toBeInTheDocument()
   })
