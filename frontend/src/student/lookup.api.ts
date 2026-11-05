@@ -2,8 +2,6 @@ import { z } from 'zod'
 import { api, ApiError } from '@/lib/api'
 import { COURSE_PERIODS } from '@/courses/courses.api'
 
-export const MINIMUM_ATTENDANCE_RATE = 75
-
 export const studentAttendanceSchema = z.object({
   student: z.object({ ra: z.string(), name: z.string() }),
   courses: z.array(

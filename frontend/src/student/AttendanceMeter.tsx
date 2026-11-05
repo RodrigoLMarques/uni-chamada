@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { EMPTY } from '@/lib/format'
-import { MINIMUM_ATTENDANCE_RATE, type StudentCourseSummary } from './lookup.api'
+import { isBelowMinimum, MINIMUM_ATTENDANCE_RATE, ratePercent } from '@/lib/attendance-rate'
+import type { StudentCourseSummary } from './lookup.api'
 
 export function AttendanceMeter({ summary }: { summary: StudentCourseSummary }) {
   const noteId = useId()
@@ -25,8 +26,8 @@ export function AttendanceMeter({ summary }: { summary: StudentCourseSummary }) 
     )
   }
 
-  const rate = Math.round(attendanceRate)
-  const below = rate < MINIMUM_ATTENDANCE_RATE
+  const rate = ratePercent(attendanceRate)
+  const below = isBelowMinimum(attendanceRate)
 
   return (
     <div
