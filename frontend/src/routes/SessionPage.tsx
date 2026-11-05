@@ -21,6 +21,9 @@ import {
   SESSION_STATUS_LABELS,
   useSession,
 } from '@/sessions/sessions.api'
+import { ConfirmSessionModal } from '@/sessions/ConfirmSessionModal'
+import { ManualEntryModal } from '@/sessions/ManualEntryModal'
+import { useRemoveAttendance } from '@/sessions/manual.api'
 import { useCloseSession, useDeleteSession, useLiveSession } from '@/sessions/useLiveSession'
 
 const TABS = ['all', 'present', 'absent', 'flagged'] as const
@@ -58,11 +61,15 @@ export function SessionPage() {
   const { live, roll, reconnecting } = useLiveSession(courseId ?? '', sessionId ?? '', open)
   const close = useCloseSession(courseId ?? '', sessionId ?? '')
   const remove = useDeleteSession(courseId ?? '', sessionId ?? '')
+  const removeAttendance = useRemoveAttendance(courseId ?? '', sessionId ?? '')
 
   const [tab, setTab] = useState<Tab>('all')
   const [search, setSearch] = useState('')
   const [confirmingClose, setConfirmingClose] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
+  const [confirmingSession, setConfirmingSession] = useState(false)
+  const [removingEntry, setRemovingEntry] = useState<RollEntry | null>(null)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const projecting = searchParams.get('projecao') === '1'
@@ -221,7 +228,15 @@ export function SessionPage() {
               </span>
             ) : null}
 
-            {session.openedAt ? (
+            {session.confirmedAt ? (
+              <span className="uc-session-openedat">
+                Confirmada às {formatTimeWithSeconds(session.confirmedAt)}
+              </span>
+            ) : session.closedAt ? (
+              <span className="uc-session-openedat">
+                Encerrada às {formatTimeWithSeconds(session.closedAt)}
+              </span>
+            ) : session.openedAt ? (
               <span className="uc-session-openedat">
                 Aberta às {formatTimeWithSeconds(session.openedAt)}
               </span>
@@ -249,6 +264,25 @@ export function SessionPage() {
               Encerrar chamada
             </button>
           </div>
+        ) : session.status === 'CLOSED' ? (
+          <div className="uc-session-actions">
+            <button
+              className="uc-btn uc-btn-secondary"
+              type="button"
+              onClick={() => setManualOpen(true)}
+            >
+              <span className="uc-icon uc-i-pencil" aria-hidden="true" />
+              Lançar presença manual
+            </button>
+            <button
+              className="uc-btn uc-btn-primary"
+              type="button"
+              onClick={() => setConfirmingSession(true)}
+            >
+              <span className="uc-icon uc-i-check-check" aria-hidden="true" />
+              Confirmar chamada
+            </button>
+          </div>
         ) : null}
 
         {open && live.data?.qr ? (
@@ -266,6 +300,21 @@ export function SessionPage() {
             <p>
               A verificação de distância fica desligada nesta chamada. Os registros continuam
               valendo.
+            </p>
+          </div>
+        </section>
+      ) : null}
+
+      {session.status === 'CLOSED' ? (
+        <section className="uc-banner uc-banner-warning" aria-labelledby="pendente">
+          <span className="uc-icon uc-i-hourglass" aria-hidden="true" />
+          <div className="uc-banner-body">
+            <p className="uc-banner-title" id="pendente">
+              Esta chamada ainda não entrou na frequência
+            </p>
+            <p>
+              Revise os registros e confirme a chamada. Até lá, as presenças e faltas de hoje ficam
+              fora do relatório da turma.
             </p>
           </div>
         </section>
@@ -298,7 +347,9 @@ export function SessionPage() {
             Ausentes
           </span>
           <span className="uc-stat-value">{summary?.absent ?? 0}</span>
-          <span className="uc-stat-meta">Até agora</span>
+          <span className="uc-stat-meta">
+            {session.status === 'CLOSED' ? 'Ficam com falta ao confirmar' : 'Até agora'}
+          </span>
         </div>
         <div className="uc-card uc-stat">
           <span className="uc-stat-label">
@@ -378,6 +429,11 @@ export function SessionPage() {
                   <th scope="col">Método</th>
                   <th scope="col">Avisos</th>
                   <th scope="col">Status</th>
+                  {session.status === 'CLOSED' ? (
+                    <th scope="col" className="uc-col-action">
+                      <span className="uc-visually-hidden">Ações</span>
+                    </th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
@@ -427,6 +483,21 @@ export function SessionPage() {
                         {entry.status === 'PRESENT' ? 'Presente' : 'Ausente'}
                       </span>
                     </td>
+                    {session.status === 'CLOSED' ? (
+                      <td className="uc-col-action">
+                        {entry.status === 'PRESENT' ? (
+                          <button
+                            className="uc-btn uc-btn-ghost uc-btn-icon"
+                            type="button"
+                            title="Remover registro"
+                            aria-label={`Remover registro de ${entry.student.name}`}
+                            onClick={() => setRemovingEntry(entry)}
+                          >
+                            <span className="uc-icon uc-i-trash-2" aria-hidden="true" />
+                          </button>
+                        ) : null}
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -445,6 +516,52 @@ export function SessionPage() {
           Excluir chamada
         </button>
       </div>
+
+      {manualOpen && courseId && sessionId ? (
+        <ManualEntryModal
+          courseId={courseId}
+          sessionId={sessionId}
+          sessionLabel={`chamada de ${formatDate(session.startsAt)} às ${formatTime(session.startsAt)}`}
+          entries={entries}
+          onClose={() => setManualOpen(false)}
+        />
+      ) : null}
+
+      {confirmingSession && courseId && sessionId && summary ? (
+        <ConfirmSessionModal
+          courseId={courseId}
+          sessionId={sessionId}
+          courseName={course.name}
+          sessionDate={formatDate(session.startsAt)}
+          summary={summary}
+          flaggedCount={counts.flagged}
+          onClose={() => setConfirmingSession(false)}
+          onConfirmed={() => {
+            setConfirmingSession(false)
+            void navigate(`/turmas/${courseId}`, { replace: true })
+          }}
+        />
+      ) : null}
+
+      {removingEntry ? (
+        <ConfirmModal
+          title={`Remover o registro de ${removingEntry.student.name}?`}
+          description="O aluno volta a contar como ausente nesta chamada. Dá para lançar de novo pelo lançamento manual."
+          confirmLabel="Remover registro"
+          cancelLabel="Manter registro"
+          busy={removeAttendance.isPending}
+          onConfirm={async () => {
+            try {
+              await removeAttendance.mutateAsync(removingEntry.student.id)
+              notify({ tone: 'success', title: 'Registro removido' })
+              setRemovingEntry(null)
+            } catch {
+              notify({ tone: 'danger', title: 'Não foi possível remover o registro' })
+            }
+          }}
+          onClose={() => setRemovingEntry(null)}
+        />
+      ) : null}
 
       {confirmingDelete ? (
         <ConfirmModal

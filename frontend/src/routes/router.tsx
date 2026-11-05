@@ -6,11 +6,11 @@ import { CoursePage } from './CoursePage'
 import { CoursesPage } from './CoursesPage'
 import { LoginPage } from './LoginPage'
 import { NotFoundPage } from './NotFoundPage'
-import { PlaceholderPage } from './PlaceholderPage'
 import { LookupPage } from './LookupPage'
 import { NewSessionPage } from './NewSessionPage'
 import { ScanPage } from './ScanPage'
 import { SignUpPage } from './SignUpPage'
+import { ReportPage } from './ReportPage'
 import { RosterPage } from './RosterPage'
 import { SessionPage } from './SessionPage'
 
@@ -30,10 +30,7 @@ export const router = createBrowserRouter([
           { path: '/turmas', element: <CoursesPage /> },
           { path: '/turmas/:courseId', element: <CoursePage /> },
           { path: '/turmas/:courseId/alunos', element: <RosterPage /> },
-          {
-            path: '/turmas/:courseId/relatorio',
-            element: <PlaceholderPage title="Relatório da turma" task="task 14" />,
-          },
+          { path: '/turmas/:courseId/relatorio', element: <ReportPage /> },
           { path: '/turmas/:courseId/chamadas/nova', element: <NewSessionPage /> },
           { path: '/turmas/:courseId/chamadas/:sessionId', element: <SessionPage /> },
           { path: '/conta', element: <AccountPage /> },
