@@ -1,32 +1,57 @@
-# React + TypeScript + Vite
+# frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interface do uni-chamada: React 19, TypeScript, Vite. São duas telas em uma: o
+painel do professor (cursos, chamada, relatório) e a tela do aluno, que abre
+pelo QR Code projetado em sala.
 
-Currently, two official plugins are available:
+## Rodando
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Tudo em container, na raiz do repo:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+docker compose up -d --build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Abre em `http://localhost:5173` e recarrega ao salvar.
+
+No host, se preferir:
+
+```bash
+cp .env.example .env
+npm install
+npm run dev
+```
+
+A `VITE_API_URL` aponta para a API (`http://localhost:3000` no padrão). Precisa
+do backend no ar, senão o login não passa.
+
+Para o aluno escanear o QR do celular, o endereço precisa ser alcançável na
+rede: suba com `npm run dev -- --host` e troque a `VITE_API_URL` pelo IP da sua
+máquina.
+
+## Testes
+
+```bash
+npm test          # vitest
+npm run test:watch
+```
+
+## Estilos
+
+CSS puro, sem framework. `src/styles/tokens.css` é gerado e não deve ser editado
+à mão — mexa em `tokens.json` e rode:
+
+```bash
+npm run tokens
+```
+
+`bundle.css` tem os componentes (classes com prefixo `uc-`) e `app.css` o resto.
+O tema claro/escuro segue o sistema, com override em `data-theme`.
+
+## Outros comandos
+
+```bash
+npm run lint      # oxlint
+npm run build     # tsc -b + vite build
+npm run preview   # serve o build
+```

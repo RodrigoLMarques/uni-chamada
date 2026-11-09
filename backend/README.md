@@ -1,6 +1,6 @@
 # backend
 
-API do uni-chamada: NestJS 12, Prisma 7, Postgres 18.
+API do uni-chamada: NestJS, TypeScript, Prisma, Postgres 18.
 
 ## Rodando
 
@@ -10,9 +10,9 @@ Tudo em container, na raiz do repo:
 docker compose up -d --build
 ```
 
-A API sobe em `http://localhost:3000`. No boot o container já aplica as
-migrations, gera o client do Prisma e roda o seed. Salvar um arquivo em
-`src/` recompila sozinho em ~2s.
+A API sobe em `http://localhost:3000`. No boot o container aplica as migrations,
+gera o client do Prisma e roda o seed. Salvar um arquivo em `src/` recompila
+sozinho em ~2s.
 
 ```bash
 docker compose logs -f backend   # logs
@@ -26,10 +26,11 @@ Se mexeu nas dependências, precisa renovar:
 docker compose up -d --build --renew-anon-volumes backend
 ```
 
-Se preferir a API no host (precisa de Node >= 24.9):
+No host, se preferir (precisa de Node >= 24.9):
 
 ```bash
 docker compose up -d postgres
+cp .env.example .env
 npm install
 npm run start:dev
 ```
@@ -38,7 +39,7 @@ npm run start:dev
 
 ```bash
 npm test          # unitários
-npm run test:e2e  # CRUD de verdade, precisa do postgres no ar
+npm run test:e2e  # precisa do postgres no ar
 npm run test:cov  # cobertura
 ```
 
