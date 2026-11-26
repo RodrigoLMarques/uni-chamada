@@ -25,6 +25,7 @@ import {
   RollSummaryDTO,
   ScanDTO,
   StudentAttendanceDTO,
+  StudentReportDTO,
   StudentSessionDTO,
 } from './models/attendance.dto';
 import { AttendanceEntity, AttendanceMethod } from './models/attendance.entity';
@@ -33,12 +34,30 @@ import {
   AttendanceRepository,
   PaginationQueryLike,
   RollRow,
+  StudentSessionRow,
   newDeviceToken,
 } from './repositories/attendance.repository';
 import { StudentDeviceRepository } from './repositories/student-device.repository';
 import { StudentNotFoundException } from './exceptions/student-not-found.exception';
 
 const DEFAULT_RADIUS_M = 100;
+
+/** Fração de 0 a 1 com duas casas, nunca porcentagem: quem formata é o cliente. */
+function rateOf(attended: number, confirmed: number): number | null {
+  if (confirmed === 0) return null;
+  return Math.round((attended / confirmed) * 100) / 100;
+}
+
+function toStudentSession(row: StudentSessionRow): StudentSessionDTO {
+  return {
+    sessionId: row.id,
+    startsAt: row.startsAt.toISOString(),
+    status: row.attendance ? 'PRESENT' : 'ABSENT',
+    confirmed: row.confirmedAt !== null,
+    method: row.attendance?.method ?? null,
+    recordedAt: row.attendance?.recordedAt.toISOString() ?? null,
+  };
+}
 const RECENT_LIMIT = 10;
 
 export type ScanResult = {
@@ -315,10 +334,7 @@ export class AttendanceService {
           photoKey: row.student.photoKey,
         },
         attendedSessions: row.attendedSessions,
-        attendanceRate:
-          counts.confirmedSessions === 0
-            ? null
-            : Math.round((row.attendedSessions / counts.confirmedSessions) * 100) / 100,
+        attendanceRate: rateOf(row.attendedSessions, counts.confirmedSessions),
       })),
       pagination: report.pagination,
       summary: {
@@ -376,10 +392,7 @@ export class AttendanceService {
         confirmedSessions: row.confirmedSessions,
         attendedSessions: row.attendedSessions,
         pendingSessions: row.pendingSessions,
-        attendanceRate:
-          row.confirmedSessions === 0
-            ? null
-            : Math.round((row.attendedSessions / row.confirmedSessions) * 100) / 100,
+        attendanceRate: rateOf(row.attendedSessions, row.confirmedSessions),
       })),
     };
   }
@@ -398,15 +411,44 @@ export class AttendanceService {
       filter,
     );
 
+    return { data: data.map(toStudentSession), pagination };
+  }
+
+  async studentCourseReport(
+    teacherId: string,
+    courseId: string,
+    studentId: string,
+    filter: PaginationQueryLike,
+  ): Promise<StudentReportDTO> {
+    await this.coursesService.findById(teacherId, courseId);
+
+    const student = await this.attendanceRepository.findEnrolledStudentById(studentId, courseId);
+    if (!student) throw new StudentNotFoundException(studentId);
+
+    const [counts, attendedSessions, sessions] = await Promise.all([
+      this.attendanceRepository.countCourseSessions(courseId),
+      this.attendanceRepository.countStudentAttended(student.id, courseId),
+      this.attendanceRepository.findStudentSessions(student.id, courseId, filter, {
+        includePending: true,
+      }),
+    ]);
+
     return {
-      data: data.map((row) => ({
-        sessionId: row.id,
-        startsAt: row.startsAt.toISOString(),
-        status: row.attendance ? 'PRESENT' : 'ABSENT',
-        method: row.attendance?.method ?? null,
-        recordedAt: row.attendance?.recordedAt.toISOString() ?? null,
-      })),
-      pagination,
+      student: {
+        id: student.id,
+        ra: student.ra,
+        name: student.name,
+        photoUrl: student.photoUrl,
+        photoKey: student.photoKey,
+      },
+      data: sessions.data.map(toStudentSession),
+      pagination: sessions.pagination,
+      summary: {
+        confirmedSessions: counts.confirmedSessions,
+        pendingSessions: counts.pendingSessions,
+        attendedSessions,
+        attendanceRate: rateOf(attendedSessions, counts.confirmedSessions),
+      },
     };
   }
 

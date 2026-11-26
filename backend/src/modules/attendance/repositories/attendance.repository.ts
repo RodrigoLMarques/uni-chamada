@@ -48,6 +48,7 @@ export type StudentCourses = {
 export type StudentSessionRow = {
   id: string;
   startsAt: Date;
+  confirmedAt: Date | null;
   attendance: AttendanceModel | null;
 };
 
@@ -365,12 +366,17 @@ export class AttendanceRepository {
     });
   }
 
+  /** O aluno só enxerga aula confirmada; o professor enxerga também a encerrada
+   *  que ainda falta confirmar, que é de onde ele precisa partir para corrigir. */
   async findStudentSessions(
     studentId: string,
     courseId: string,
     filter: PaginationQueryLike,
+    options: { includePending?: boolean } = {},
   ): Promise<PaginatedItems<StudentSessionRow>> {
-    const where = { courseId, confirmedAt: { not: null } };
+    const where = options.includePending
+      ? { courseId, closedAt: { not: null } }
+      : { courseId, confirmedAt: { not: null } };
 
     const [items, totalItems] = await Promise.all([
       this.prisma.classSession.findMany({
@@ -387,10 +393,23 @@ export class AttendanceRepository {
       data: items.map((item) => ({
         id: item.id,
         startsAt: item.startsAt,
+        confirmedAt: item.confirmedAt,
         attendance: item.attendances[0] ?? null,
       })),
       pagination: makePagination(filter.page, filter.itemsPerPage, totalItems),
     };
+  }
+
+  async findEnrolledStudentById(studentId: string, courseId: string): Promise<StudentModel | null> {
+    return this.prisma.student.findFirst({
+      where: { id: studentId, enrollments: { some: { courseId, status: 'ACTIVE' } } },
+    });
+  }
+
+  async countStudentAttended(studentId: string, courseId: string): Promise<number> {
+    return this.prisma.attendance.count({
+      where: { studentId, classSession: { courseId, confirmedAt: { not: null } } },
+    });
   }
 
   async countCourseSessions(courseId: string): Promise<CourseSessionCounts> {

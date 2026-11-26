@@ -8,6 +8,7 @@ import {
   LiveSessionDTO,
   QrTokenDTO,
   StudentAttendanceDTO,
+  StudentReportDTO,
   StudentSessionDTO,
 } from '../src/modules/attendance/models/attendance.dto';
 import { AuthResponse } from '../src/modules/auth/models/auth.dto';
@@ -301,6 +302,113 @@ describe('Attendance report (e2e)', () => {
         .expect(404);
 
       await prisma.user.deleteMany({ where: { email: otherEmail } });
+    });
+  });
+
+  describe('student detail for the teacher', () => {
+    let detailCourse: string;
+    let absentId: string;
+    let pendingSession: string;
+
+    beforeAll(async () => {
+      const course = await request(app.getHttpServer())
+        .post('/courses')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ code: `D${stamp}`, name: 'Detail', term: '2026.2', period: 'EVENING' })
+        .expect(201);
+      detailCourse = (course.body as CourseDTO).id;
+
+      for (const ra of [raPresent, raAbsent]) {
+        await request(app.getHttpServer())
+          .post(`/courses/${detailCourse}/enrollments`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ ra, name: `Student ${ra}` })
+          .expect(201);
+      }
+
+      // Presença manual em vez de scan: o /scan tem limite de 10 por minuto por IP
+      // e a suíte inteira sai do mesmo IP.
+      const record = async (sessionId: string, ra: string) => {
+        await request(app.getHttpServer())
+          .post(`/courses/${detailCourse}/sessions/${sessionId}/attendance`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ ra })
+          .expect(201);
+      };
+
+      const first = await openSession('2026-12-09T13:00:00.000Z', detailCourse);
+      await record(first, raPresent);
+      await closeAndConfirm(first, detailCourse);
+
+      const second = await openSession('2026-12-10T13:00:00.000Z', detailCourse);
+      await record(second, raPresent);
+      await record(second, raAbsent);
+      await closeAndConfirm(second, detailCourse);
+
+      pendingSession = await openSession('2026-12-11T13:00:00.000Z', detailCourse);
+      await record(pendingSession, raAbsent);
+      await request(app.getHttpServer())
+        .post(`/courses/${detailCourse}/sessions/${pendingSession}/close`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const report = await request(app.getHttpServer())
+        .get(`/courses/${detailCourse}/report`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      absentId =
+        (report.body as CourseReportDTO).data.find((row) => row.student.ra === raAbsent)?.student
+          .id ?? '';
+    });
+
+    it('lists every closed session, present and absent, newest first', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/courses/${detailCourse}/report/students/${absentId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = response.body as StudentReportDTO;
+      expect(body.student.ra).toBe(raAbsent);
+      expect(body.pagination.totalItems).toBe(3);
+      expect(body.data.map((row) => row.status)).toEqual(['PRESENT', 'PRESENT', 'ABSENT']);
+      expect(body.data[0].sessionId).toBe(pendingSession);
+    });
+
+    it('marks the session still waiting for confirmation', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/courses/${detailCourse}/report/students/${absentId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = response.body as StudentReportDTO;
+      expect(body.data[0].confirmed).toBe(false);
+      expect(body.data[1].confirmed).toBe(true);
+    });
+
+    it('counts the rate over confirmed sessions only, leaving the pending one out', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/courses/${detailCourse}/report/students/${absentId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = response.body as StudentReportDTO;
+      expect(body.summary.confirmedSessions).toBe(2);
+      expect(body.summary.pendingSessions).toBe(1);
+      expect(body.summary.attendedSessions).toBe(1);
+      expect(body.summary.attendanceRate).toBe(0.5);
+    });
+
+    it('needs a token', async () => {
+      await request(app.getHttpServer())
+        .get(`/courses/${detailCourse}/report/students/${absentId}`)
+        .expect(401);
+    });
+
+    it('returns 404 for a student not enrolled in the course', async () => {
+      await request(app.getHttpServer())
+        .get(`/courses/${detailCourse}/report/students/${courseId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
     });
   });
 

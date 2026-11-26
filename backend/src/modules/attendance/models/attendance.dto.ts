@@ -179,8 +179,27 @@ export type StudentSessionDTO = {
   sessionId: string;
   startsAt: string;
   status: RollStatus;
+  confirmed: boolean;
   method: AttendanceMethod | null;
   recordedAt: string | null;
+};
+
+export type StudentReportDTO = {
+  student: {
+    id: string;
+    ra: string;
+    name: string;
+    photoUrl: string | null;
+    photoKey?: string | null;
+  };
+  data: StudentSessionDTO[];
+  pagination: PaginationMeta;
+  summary: {
+    confirmedSessions: number;
+    pendingSessions: number;
+    attendedSessions: number;
+    attendanceRate: number | null;
+  };
 };
 
 export type LiveSessionDTO = {
