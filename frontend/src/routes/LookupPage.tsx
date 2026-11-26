@@ -2,9 +2,15 @@ import { useState } from 'react'
 import { PERIOD_LABELS } from '@/courses/courses.api'
 import { NetworkError } from '@/lib/api'
 import { AttendanceMeter } from '@/student/AttendanceMeter'
+import { CourseDays } from '@/student/CourseDays'
 import { RaField } from '@/student/RaField'
 import { StudentShell } from '@/student/StudentShell'
-import { getStudentAttendance, isNotFound, type StudentAttendance } from '@/student/lookup.api'
+import {
+  getStudentAttendance,
+  isNotFound,
+  type StudentAttendance,
+  type StudentCourseSummary,
+} from '@/student/lookup.api'
 
 const NOT_FOUND =
   'Não encontramos frequência para esse RA. Confira os números ou fale com o professor da turma.'
@@ -14,6 +20,7 @@ export function LookupPage() {
   const [result, setResult] = useState<StudentAttendance | null>(null)
   const [error, setError] = useState<string | undefined>(undefined)
   const [searching, setSearching] = useState(false)
+  const [opened, setOpened] = useState<StudentCourseSummary | null>(null)
 
   async function onSubmit() {
     if (ra.length === 0) return
@@ -31,6 +38,14 @@ export function LookupPage() {
     } finally {
       setSearching(false)
     }
+  }
+
+  if (result && opened) {
+    return (
+      <StudentShell>
+        <CourseDays ra={result.student.ra} summary={opened} onBack={() => setOpened(null)} />
+      </StudentShell>
+    )
   }
 
   if (result) {
@@ -57,16 +72,25 @@ export function LookupPage() {
           </div>
         ) : (
           result.courses.map((summary) => (
-            <section key={summary.course.id} className="uc-card uc-card-body uc-student-course">
-              <div>
-                <h2 className="uc-student-course-name">{summary.course.name}</h2>
-                <p className="uc-student-course-meta">
-                  <span>{summary.course.code}</span>
-                  <span>{PERIOD_LABELS[summary.course.period]}</span>
-                </p>
+            <button
+              key={summary.course.id}
+              className="uc-card uc-card-body uc-student-course uc-student-course-open"
+              type="button"
+              onClick={() => setOpened(summary)}
+            >
+              <div className="uc-student-course-head">
+                <div>
+                  <h2 className="uc-student-course-name">{summary.course.name}</h2>
+                  <p className="uc-student-course-meta">
+                    <span>{summary.course.code}</span>
+                    <span>{PERIOD_LABELS[summary.course.period]}</span>
+                  </p>
+                </div>
+                <span className="uc-icon uc-i-chevron-right" aria-hidden="true" />
               </div>
               <AttendanceMeter summary={summary} />
-            </section>
+              <span className="uc-student-course-cta">Ver aula por aula</span>
+            </button>
           ))
         )}
 
@@ -75,6 +99,7 @@ export function LookupPage() {
           type="button"
           onClick={() => {
             setResult(null)
+            setOpened(null)
             setRa('')
           }}
         >

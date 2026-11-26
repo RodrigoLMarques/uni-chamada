@@ -32,6 +32,41 @@ export function getStudentAttendance(ra: string, signal?: AbortSignal) {
   })
 }
 
+export const studentSessionSchema = z.object({
+  sessionId: z.string(),
+  startsAt: z.string(),
+  status: z.enum(['PRESENT', 'ABSENT']),
+  confirmed: z.boolean(),
+  method: z.enum(['QR', 'MANUAL']).nullable(),
+  recordedAt: z.string().nullable(),
+})
+
+export type StudentSession = z.infer<typeof studentSessionSchema>
+
+export const studentSessionsSchema = z.object({
+  data: z.array(studentSessionSchema),
+  pagination: z.object({
+    page: z.number(),
+    itemsPerPage: z.number(),
+    totalItems: z.number(),
+    totalPages: z.number(),
+  }),
+})
+
+export type StudentSessions = z.infer<typeof studentSessionsSchema>
+
+export function getStudentCourseSessions(
+  ra: string,
+  courseId: string,
+  page: number,
+  signal?: AbortSignal,
+) {
+  return api.request(
+    `/students/${encodeURIComponent(ra)}/courses/${courseId}/attendance?page=${page}&itemsPerPage=100`,
+    { schema: studentSessionsSchema, anonymous: true, signal },
+  )
+}
+
 export function isNotFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404
 }
