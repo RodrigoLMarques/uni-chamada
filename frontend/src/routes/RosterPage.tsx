@@ -153,7 +153,9 @@ export function RosterPage() {
                         <div className="uc-student">
                           <StudentAvatar
                             name={entry.student.name}
+                            ra={entry.student.ra}
                             photoUrl={entry.student.photoUrl}
+                            zoomable
                           />
                           <span className="uc-student-name">{entry.student.name}</span>
                         </div>
