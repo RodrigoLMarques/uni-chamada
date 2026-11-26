@@ -12,6 +12,7 @@ import { ScanPage } from './ScanPage'
 import { SignUpPage } from './SignUpPage'
 import { ReportPage } from './ReportPage'
 import { RosterPage } from './RosterPage'
+import { StudentReportPage } from './StudentReportPage'
 import { SessionPage } from './SessionPage'
 
 export const router = createBrowserRouter([
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
           { path: '/turmas/:courseId', element: <CoursePage /> },
           { path: '/turmas/:courseId/alunos', element: <RosterPage /> },
           { path: '/turmas/:courseId/relatorio', element: <ReportPage /> },
+          {
+            path: '/turmas/:courseId/relatorio/:studentId',
+            element: <StudentReportPage />,
+          },
           { path: '/turmas/:courseId/chamadas/nova', element: <NewSessionPage /> },
           { path: '/turmas/:courseId/chamadas/:sessionId', element: <SessionPage /> },
           { path: '/conta', element: <AccountPage /> },

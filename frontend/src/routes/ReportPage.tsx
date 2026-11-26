@@ -86,7 +86,8 @@ export function ReportPage() {
         <h1 className="uc-page-title">Relatório de frequência</h1>
         <p className="uc-report-note">
           A porcentagem de cada aluno considera só as {summary?.confirmedSessions ?? 0}{' '}
-          {summary?.confirmedSessions === 1 ? 'aula confirmada' : 'aulas confirmadas'}.
+          {summary?.confirmedSessions === 1 ? 'aula confirmada' : 'aulas confirmadas'}. Abra um
+          aluno para ver dia a dia quando ele veio e quando faltou.
         </p>
       </header>
 
@@ -180,9 +181,16 @@ export function ReportPage() {
                         <div className="uc-student">
                           <StudentAvatar
                             name={entry.student.name}
+                            ra={entry.student.ra}
                             photoUrl={entry.student.photoUrl}
+                            zoomable
                           />
-                          <span className="uc-student-name">{entry.student.name}</span>
+                          <Link
+                            className="uc-student-name uc-student-link-row"
+                            to={`/turmas/${courseId}/relatorio/${entry.student.id}`}
+                          >
+                            {entry.student.name}
+                          </Link>
                         </div>
                       </td>
                       <td className="uc-cell-muted">{entry.student.ra}</td>
